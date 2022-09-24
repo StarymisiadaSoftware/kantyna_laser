@@ -17,7 +17,7 @@ struct Form {
 
 enum Msg {
     InputValue(String),
-    //Submit
+    Submit
 }
 
 impl Component for Form {
@@ -34,8 +34,11 @@ impl Component for Form {
         let onchange = link.callback(|e: Event| {
             log!("Inside event handler");
             let value = e.target_unchecked_into::<HtmlInputElement>().value();
-            log!("value: {}",&value);
+            log!("sending value: ",&value);
             Msg::InputValue(value)
+        });
+        let onclick = link.callback(|_e: MouseEvent| {
+            Msg::Submit
         });
         html! {
             <form>
@@ -44,9 +47,10 @@ impl Component for Form {
             <input onchange={onchange}
                 id="dangerous-input"
                 type="text"
+                value={self.url.clone()}
             />
             </label>
-                <button id="przechuj" >{"Pierdol sie"}</button>
+                <button id="przechuj" onclick={onclick}>{"Zleć dodanie do kolejki"}</button>
             </form>
         }
     }
@@ -55,8 +59,13 @@ impl Component for Form {
         match msg {
             Msg::InputValue(url) => {
                 log!("Handling URL change: ",&url);
+                self.url = url;
+            }
+            Msg::Submit => {
+                log!("Inside Submit handler.");
+
                 let post = Request::post("http://192.168.0.20:8090/enqueue")
-                    .json(&EnqueueRequest{ url });
+                    .json(&EnqueueRequest{ url: self.url.clone() });
                 match post {
                     Ok(r) => {
                         wasm_bindgen_futures::spawn_local(async move {
@@ -76,10 +85,9 @@ impl Component for Form {
                         log!("fuck: ",e.to_string());
                     }
                 }
-
             }
         }
-        false
+        true
     }
 }
 
