@@ -56,7 +56,7 @@ async fn main() -> std::io::Result<()> {
             .wrap_fn(|req,srv| {
                 let fut = srv.call(req);
                 async {
-                    let mut res = fut.await?;
+                    let res = fut.await?;
                     eprintln!("{}: {:?}",res.response().status(),res.response().body());
                     Ok(res)
             }})
