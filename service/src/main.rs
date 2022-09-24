@@ -4,6 +4,7 @@ use thiserror::Error;
 use std::{path::Path, borrow::Borrow};
 use anyhow::Result;
 use serde_json::from_str;
+use actix_cors::Cors;
 use tokio::{fs::OpenOptions,io::AsyncWriteExt};
 
 async fn append_to_file(a: &Path, data: &[u8]) -> Result<(),MyError> {
@@ -53,6 +54,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .service(enqueue)
+            .wrap(
+                Cors::default()
+            )   
             .wrap_fn(|req,srv| {
                 let fut = srv.call(req);
                 async {
@@ -61,7 +65,7 @@ async fn main() -> std::io::Result<()> {
                     Ok(res)
             }})
     })
-    .bind(("127.0.0.1", 8090))?
+    .bind(("0.0.0.0", 8090))?
     .run()
     .await
 }
