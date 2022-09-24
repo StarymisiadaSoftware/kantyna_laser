@@ -65,15 +65,17 @@ impl Component for Form {
             Msg::Submit => {
                 log!("Inside Submit handler.");
                 let endpoint = js_eval(r#"
-                    window.location.href
+                    window.location.hostname
                 "#);
                 match endpoint {
                     Ok(endpoint_value) => {
                         if let Some(endpoint) = endpoint_value.as_string() {
+                            log!("Got endpoint from JS: ",&endpoint);
                             let mut endpoint = endpoint.replace("?", "");
-                            let mut endpoint = endpoint.replace("8080", "8090");
-                            endpoint.push_str("enqueue");
-                            //let post = Request::post("http://192.168.0.20:8090/enqueue")
+                            //let mut endpoint = endpoint.replace("8080", "8090");
+                            //endpoint.push_str(":8090/enqueue");
+                            let endpoint = format!("http://{}:8090/enqueue",endpoint);
+                            log!("Final endpoint: ",&endpoint);
                             let post = Request::post(&endpoint)
                                 .json(&EnqueueRequest{ url: self.url.clone() });
                             match post {
@@ -85,22 +87,22 @@ impl Component for Form {
                                                 log!("Got response: ",res.status_text());
                                             }
                                             Err(e) => {
-                                                log!("fuck: ",e.to_string());
+                                                log!("Failed to send request: ",e.to_string());
                                             }
                                         }
                                         log!("POST-sending future completes.");
                                     });
                                 }
                                 Err(e) => {
-                                    log!("fuck: ",e.to_string());
+                                    log!("Failed to create POST request: ",e.to_string());
                                 }
                             }
                         } else {
-                            log!("Ni chuja");
+                            log!("Ni chuja: JsValue to nie String");
                         }
                     }
                     Err(e) => {
-                        log!("No i chuj")
+                        log!("No i chuj: window.location.host nie teges")
                     }
                 }
             }
@@ -114,8 +116,9 @@ fn app() -> Html {
     html! {
         <div class="chuj_mnie_strzeli">
             <h1>{"Dodaj do kolejki"}</h1>
-            <h2>{"Lorem kurwa ipsum ci w dupe na śniadanie dolor sit amet jego mać"}</h2>
+            <h2>{"Wklej jakiś link z YouTube."}</h2>
             <Form/>
+            <p>{"Po kliknięciu na guzior nie pojawi się żaden komunikat jak coś."}</p>
         </div>
     }
 }
