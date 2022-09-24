@@ -56,6 +56,9 @@ async fn main() -> std::io::Result<()> {
             .service(enqueue)
             .wrap(
                 Cors::default()
+                        .allow_any_origin()
+                        .allow_any_method()
+                        .allow_any_header()
             )   
             .wrap_fn(|req,srv| {
                 let fut = srv.call(req);

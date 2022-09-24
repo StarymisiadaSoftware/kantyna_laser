@@ -4,6 +4,7 @@ use web_sys::HtmlInputElement;
 use gloo_console::log;
 use gloo_net::http::Request;
 use serde::Serialize;
+use js_sys::eval as js_eval;
 
 #[derive(Debug,Serialize)]
 struct EnqueueRequest {
@@ -63,26 +64,43 @@ impl Component for Form {
             }
             Msg::Submit => {
                 log!("Inside Submit handler.");
-
-                let post = Request::post("http://192.168.0.20:8090/enqueue")
-                    .json(&EnqueueRequest{ url: self.url.clone() });
-                match post {
-                    Ok(r) => {
-                        wasm_bindgen_futures::spawn_local(async move {
-                            log!("Hello from POST-sending future.");
-                            match r.send().await {
-                                Ok(res) => {
-                                    log!("Got response: ",res.status_text());
+                let endpoint = js_eval(r#"
+                    window.location.href
+                "#);
+                match endpoint {
+                    Ok(endpoint_value) => {
+                        if let Some(endpoint) = endpoint_value.as_string() {
+                            let mut endpoint = endpoint.replace("?", "");
+                            let mut endpoint = endpoint.replace("8080", "8090");
+                            endpoint.push_str("enqueue");
+                            //let post = Request::post("http://192.168.0.20:8090/enqueue")
+                            let post = Request::post(&endpoint)
+                                .json(&EnqueueRequest{ url: self.url.clone() });
+                            match post {
+                                Ok(r) => {
+                                    wasm_bindgen_futures::spawn_local(async move {
+                                        log!("Hello from POST-sending future.");
+                                        match r.send().await {
+                                            Ok(res) => {
+                                                log!("Got response: ",res.status_text());
+                                            }
+                                            Err(e) => {
+                                                log!("fuck: ",e.to_string());
+                                            }
+                                        }
+                                        log!("POST-sending future completes.");
+                                    });
                                 }
                                 Err(e) => {
                                     log!("fuck: ",e.to_string());
                                 }
                             }
-                            log!("POST-sending future completes.");
-                        });
+                        } else {
+                            log!("Ni chuja");
+                        }
                     }
                     Err(e) => {
-                        log!("fuck: ",e.to_string());
+                        log!("No i chuj")
                     }
                 }
             }
