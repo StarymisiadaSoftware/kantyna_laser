@@ -51,7 +51,7 @@ impl Component for Form {
                 value={self.url.clone()}
             />
             </label>
-                <button id="przechuj" onclick={onclick}>{"Zleć dodanie do kolejki"}</button>
+                <button id="przechuj" type="button" onclick={onclick}>{"Zleć dodanie do kolejki"}</button>
             </form>
         }
     }
