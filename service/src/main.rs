@@ -1,5 +1,5 @@
 use actix_web::{post,App, HttpResponse, HttpServer, Responder, ResponseError, dev::Service};
-use serde::Deserialize;
+use common::EnqueueRequest;
 use thiserror::Error;
 use std::{path::Path, borrow::Borrow};
 use anyhow::Result;
@@ -17,11 +17,6 @@ async fn append_to_file(a: &Path, data: &[u8]) -> Result<(),MyError> {
 fn sanitize(youtube_url: String) -> Result<String,MyError> {
     let sanitized = youtube_url;
     Ok(sanitized)
-}
-
-#[derive(Debug,Deserialize)]
-struct EnqueueRequest {
-    url: String
 }
 
 

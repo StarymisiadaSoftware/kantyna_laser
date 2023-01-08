@@ -3,13 +3,8 @@ use yew::TargetCast;
 use web_sys::HtmlInputElement;
 use gloo_console::log;
 use gloo_net::http::Request;
-use serde::Serialize;
 use js_sys::eval as js_eval;
-
-#[derive(Debug,Serialize)]
-struct EnqueueRequest {
-    url: String
-}
+use common::EnqueueRequest;
 
 
 struct Form {
