@@ -65,11 +65,11 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
                             }
                         }
                     } else {
-                        log!("Ni chuja: JsValue to nie String");
+                        log!("'window.location.host' could not be evaluated to a string.");
                     }
                 }
                 Err(e) => {
-                    log!("No i chuj: window.location.host nie teges")
+                    log!("Could not evaluate 'window.location.host'.", e);
                 }
             }
         }
@@ -89,7 +89,10 @@ fn view(model: &Model) -> Node<Msg> {
         div![
             C!["input_frame"],
             C!["row"],
-            input![input_ev(Ev::Input, |v: String| Msg::InputValue(v))],
+            input![
+                &model.youtube_url,
+                input_ev(Ev::Input, |v: String| Msg::InputValue(v))
+            ],
             button!["Zleć dodanie do kolejki", ev(Ev::Click, |_| Msg::Submit)]
         ],
         p!["Po kliknięciu na guzior nie pojawi się żaden komunikat jak coś."],
