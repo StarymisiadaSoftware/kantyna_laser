@@ -7,7 +7,35 @@
     <link rel="modulepreload" href="/pkg/package.js" as="script" type="text/javascript">
     <link rel="preload" href="/pkg/package_bg.wasm" as="fetch" type="application/wasm" crossorigin="anonymous">
     <style>
-        
+        body {
+            background-color: black;
+            color: white;
+        }
+        #url_frame {
+            width: 90%;
+        }
+        #queue_frame {
+            width: 90%;
+        }
+        #input_frame {
+            
+        }
+        .in_border {
+            border: 1px white solid;
+        }
+        .column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .row {
+            display: flex;
+            align-items: center;
+        }
+        .spaced {
+            /* padding: 10px; */
+            margin: 10px;
+        }
     </style>
 </head>
 

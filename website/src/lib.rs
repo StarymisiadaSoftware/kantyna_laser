@@ -81,20 +81,47 @@ fn run_submit(url: String) {
 
 fn view(model: &Model) -> Node<Msg> {
     div![
-        C!["url_frame"],
         C!["column"],
-        h1!["Dodaj do kolejki"],
-        h2!["Wklej jakiś link z YouTube."],
         div![
-            C!["input_frame"],
-            C!["row"],
-            input![
-                &model.youtube_url,
-                input_ev(Ev::Input, |v: String| Msg::InputValue(v))
+            id!["url_frame"],
+            C!["spaced"],
+            C!["column"],
+            C!["in_border"],
+            h1![C!["spaced"], "Dodaj do kolejki"],
+            div![
+                id!["input_frame"],
+                C!["in_border"],
+                C!["column"],
+                C!["spaced"],
+                h3![C!["spaced"], "Wklej jakiś link z YouTube."],
+                div![
+                    C!["row"],
+                    C!["spaced"],
+                    input![
+                        C!["spaced"],
+                        &model.youtube_url,
+                        input_ev(Ev::Input, |v: String| Msg::InputValue(v))
+                    ],
+                    button![
+                        C!["spaced"],
+                        "Zleć dodanie do kolejki",
+                        ev(Ev::Click, |_| Msg::Submit)
+                    ]
+                ],
             ],
-            button!["Zleć dodanie do kolejki", ev(Ev::Click, |_| Msg::Submit)]
+            p![
+                C!["spaced"],
+                style! {St::TextAlign => "center"},
+                "Po kliknięciu na guzior nie pojawi się żaden komunikat jak coś."
+            ],
         ],
-        p!["Po kliknięciu na guzior nie pojawi się żaden komunikat jak coś."],
+        div![
+            id!["queue_frame"],
+            C!["column"],
+            C!["spaced"],
+            C!["in_border"],
+            h1![C!["spaced"], "Kolejka"],
+        ]
     ]
 }
 
