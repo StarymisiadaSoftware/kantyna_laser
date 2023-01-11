@@ -21,7 +21,7 @@ wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
 common = { path = "../common" }
 seed = "0.9"
-
+anyhow = "1"
 
 [profile.release]
 lto = true
