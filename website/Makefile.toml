@@ -18,6 +18,13 @@ run_task = [
 ]
 watch = true
 
+[tasks.watch_release]
+description = "Watch files and recompile the project on change (release mode)"
+run_task = [
+    { name = "build_release" },
+]
+watch = true
+
 [tasks.serve]
 description = "Start server"
 install_crate = { crate_name = "microserver", binary = "microserver", test_arg = "-h" }
