@@ -82,6 +82,7 @@ fn run_submit(url: String) {
 fn view(model: &Model) -> Node<Msg> {
     div![
         C!["column"],
+        id!["top_frame"],
         div![
             id!["url_frame"],
             C!["spaced"],

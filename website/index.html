@@ -13,24 +13,33 @@
         }
         #url_frame {
             width: 90%;
+            /* flex: 0 0 100px; */
         }
         #queue_frame {
             width: 90%;
+            justify-content: start;
+            /* flex: 90 0 100px; */
         }
         #input_frame {
-            
+            width: 90%;
+        }
+        #top_frame {
+            height: 100vh;
         }
         .in_border {
             border: 1px white solid;
         }
         .column {
             display: flex;
+            height: 100%;
             flex-direction: column;
             align-items: center;
+            justify-content: space-evenly;
         }
         .row {
             display: flex;
             align-items: center;
+            justify-content: space-evenly;
         }
         .spaced {
             /* padding: 10px; */
