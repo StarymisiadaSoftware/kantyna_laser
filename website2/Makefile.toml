@@ -1,3 +1,8 @@
+# This file may contain broken configuration.
+# It may or may not work depending on the working directory inside of my workspace.
+# I know nothing about cargo-make so I'll just leave it like that
+# One can always use the underlying tools manually.
+
 [env]
 PORT = "8000"
 
