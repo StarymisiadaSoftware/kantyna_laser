@@ -1,34 +1,100 @@
+use common::EnqueueRequest;
+use js_sys::eval as js_eval;
 use seed::{prelude::*, *};
-
+// use gloo_net::http::Request;
 
 fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
-    Model { counter: 0 }
+    Model {
+        youtube_url: "".to_owned(),
+    }
 }
 
 struct Model {
-    counter: i32,
+    youtube_url: String,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Clone)]
 enum Msg {
-    Increment,
+    InputValue(String),
+    Submit,
 }
 
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Increment => model.counter += 1,
+        Msg::Submit => {
+            log!("Inside Submit handler.");
+            let endpoint = js_eval(
+                r#"
+                    window.location.hostname
+                "#,
+            );
+            match endpoint {
+                Ok(endpoint_value) => {
+                    if let Some(endpoint) = endpoint_value.as_string() {
+                        log!("Got endpoint from JS: ", &endpoint);
+                        let endpoint = endpoint.replace("?", "");
+                        //let mut endpoint = endpoint.replace("8080", "8090");
+                        //endpoint.push_str(":8090/enqueue");
+                        let endpoint = format!("http://{}:8090/enqueue", endpoint);
+                        log!("Final endpoint: ", &endpoint);
+                        let post =
+                            Request::new(endpoint)
+                                .method(Method::Post)
+                                .json(&EnqueueRequest {
+                                    url: model.youtube_url.clone(),
+                                });
+                        match post {
+                            Ok(r) => {
+                                wasm_bindgen_futures::spawn_local(async move {
+                                    log!("Hello from POST-sending future.");
+                                    match r.fetch().await {
+                                        Ok(res) => {
+                                            log!("Got response: {:?}", res.text().await);
+                                        }
+                                        Err(e) => {
+                                            let e = format!("{:?}", e);
+                                            log!("Failed to send request: ", e);
+                                        }
+                                    }
+                                    log!("POST-sending future completes.");
+                                });
+                            }
+                            Err(e) => {
+                                let e = format!("{:?}", e);
+                                log!("Failed to create POST request: ", e);
+                            }
+                        }
+                    } else {
+                        log!("Ni chuja: JsValue to nie String");
+                    }
+                }
+                Err(e) => {
+                    log!("No i chuj: window.location.host nie teges")
+                }
+            }
+        }
+        Msg::InputValue(url) => {
+            log!("Handling URL change: ", &url);
+            model.youtube_url = url;
+        }
     }
 }
 
-
 fn view(model: &Model) -> Node<Msg> {
     div![
-        "This is a counter: ",
-        C!["counter"],
-        button![model.counter, ev(Ev::Click, |_| Msg::Increment),],
+        C!["url_frame"],
+        C!["column"],
+        h1!["Dodaj do kolejki"],
+        h2!["Wklej jakiś link z YouTube."],
+        div![
+            C!["input_frame"],
+            C!["row"],
+            input![input_ev(Ev::Input, |v: String| Msg::InputValue(v))],
+            button!["Zleć dodanie do kolejki", ev(Ev::Click, |_| Msg::Submit)]
+        ],
+        p!["Po kliknięciu na guzior nie pojawi się żaden komunikat jak coś."],
     ]
 }
-
 
 #[wasm_bindgen(start)]
 pub fn start() {

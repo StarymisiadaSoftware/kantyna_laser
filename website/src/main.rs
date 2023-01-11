@@ -1,11 +1,10 @@
-use yew::prelude::*;
-use yew::TargetCast;
-use web_sys::HtmlInputElement;
+use common::EnqueueRequest;
 use gloo_console::log;
 use gloo_net::http::Request;
 use js_sys::eval as js_eval;
-use common::EnqueueRequest;
-
+use web_sys::HtmlInputElement;
+use yew::prelude::*;
+use yew::TargetCast;
 
 struct Form {
     url: String,
@@ -13,7 +12,7 @@ struct Form {
 
 enum Msg {
     InputValue(String),
-    Submit
+    Submit,
 }
 
 impl Component for Form {
@@ -21,8 +20,8 @@ impl Component for Form {
     type Properties = ();
 
     fn create(ctx: &Context<Self>) -> Self {
-        Form{
-            url: String::default()
+        Form {
+            url: String::default(),
         }
     }
     fn view(&self, ctx: &Context<Self>) -> Html {
@@ -30,12 +29,10 @@ impl Component for Form {
         let onchange = link.callback(|e: Event| {
             log!("Inside event handler");
             let value = e.target_unchecked_into::<HtmlInputElement>().value();
-            log!("sending value: ",&value);
+            log!("sending value: ", &value);
             Msg::InputValue(value)
         });
-        let onclick = link.callback(|_e: MouseEvent| {
-            Msg::Submit
-        });
+        let onclick = link.callback(|_e: MouseEvent| Msg::Submit);
         html! {
             <form>
             <label for="dangerous-input">
@@ -54,42 +51,45 @@ impl Component for Form {
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::InputValue(url) => {
-                log!("Handling URL change: ",&url);
+                log!("Handling URL change: ", &url);
                 self.url = url;
             }
             Msg::Submit => {
                 log!("Inside Submit handler.");
-                let endpoint = js_eval(r#"
+                let endpoint = js_eval(
+                    r#"
                     window.location.hostname
-                "#);
+                "#,
+                );
                 match endpoint {
                     Ok(endpoint_value) => {
                         if let Some(endpoint) = endpoint_value.as_string() {
-                            log!("Got endpoint from JS: ",&endpoint);
-                            let mut endpoint = endpoint.replace("?", "");
+                            log!("Got endpoint from JS: ", &endpoint);
+                            let endpoint = endpoint.replace("?", "");
                             //let mut endpoint = endpoint.replace("8080", "8090");
                             //endpoint.push_str(":8090/enqueue");
-                            let endpoint = format!("http://{}:8090/enqueue",endpoint);
-                            log!("Final endpoint: ",&endpoint);
-                            let post = Request::post(&endpoint)
-                                .json(&EnqueueRequest{ url: self.url.clone() });
+                            let endpoint = format!("http://{}:8090/enqueue", endpoint);
+                            log!("Final endpoint: ", &endpoint);
+                            let post = Request::post(&endpoint).json(&EnqueueRequest {
+                                url: self.url.clone(),
+                            });
                             match post {
                                 Ok(r) => {
                                     wasm_bindgen_futures::spawn_local(async move {
                                         log!("Hello from POST-sending future.");
                                         match r.send().await {
                                             Ok(res) => {
-                                                log!("Got response: ",res.status_text());
+                                                log!("Got response: ", res.status_text());
                                             }
                                             Err(e) => {
-                                                log!("Failed to send request: ",e.to_string());
+                                                log!("Failed to send request: ", e.to_string());
                                             }
                                         }
                                         log!("POST-sending future completes.");
                                     });
                                 }
                                 Err(e) => {
-                                    log!("Failed to create POST request: ",e.to_string());
+                                    log!("Failed to create POST request: ", e.to_string());
                                 }
                             }
                         } else {
