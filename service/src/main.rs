@@ -2,33 +2,30 @@ use actix_cors::Cors;
 use actix_web::{dev::Service, post, App, HttpResponse, HttpServer, Responder, ResponseError};
 use anyhow::Result;
 use common::EnqueueRequest;
+use lazy_static::lazy_static;
 use serde_json::from_str;
-use std::{path::{Path, PathBuf}};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use thiserror::Error;
-use tokio::{fs::OpenOptions, io::AsyncWriteExt};
+use tokio::{fs::OpenOptions, io::AsyncWriteExt, process::Command, sync::Mutex};
 
-struct Song {
-    url: String,
-    /// in seconds
-    duration: Option<u16>,
-    title: Option<String>,
-    miniature_url: Option<String>
+pub mod util;
+use util::*;
+
+pub mod song;
+pub mod hook_runner;
+use hook_runner::*;
+
+pub mod music_queue;
+use music_queue::*;
+
+lazy_static! {
+    pub static ref hook_runner_instance: Arc<Mutex<HookRunner>> = Default::default();
+    pub static ref music_queue_instance: Arc<Mutex<MusicQueue>> = Default::default();
 }
 
-struct MusicQueue {
-    queue: Vec<Song>,
-    currently_played: Option<Song>
-}
-struct HookRunner {
-    hooks: Vec<PathBuf>
-}
-
-impl HookRunner {
-    /// Completes when ALL of the hooks have finished processing
-    async fn run_hooks(&self) {
-
-    }
-}
 
 async fn append_to_file(a: &Path, data: &[u8]) -> Result<(), MyError> {
     let mut file = OpenOptions::new().append(true).open(a).await?;
@@ -65,6 +62,13 @@ async fn enqueue(req_body: String) -> Result<String, MyError> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    hook_runner_instance
+        .lock()
+        .await
+        .load()
+        .await
+        .map_err(anyhow_error_to_stdio_error)?;
+
     HttpServer::new(|| {
         App::new()
             .service(enqueue)
