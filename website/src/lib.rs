@@ -20,6 +20,8 @@ struct Model {
 enum Msg {
     InputValue(String),
     Submit,
+    RefreshQueuePreview,
+    DisplayNewQueuePreview(Box<MusicQueuePreview>)
 }
 
 fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
@@ -31,6 +33,12 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
         Msg::InputValue(url) => {
             log!("Handling URL change: ", &url);
             model.youtube_url = url;
+        },
+        Msg::RefreshQueuePreview => {
+
+        },
+        Msg::DisplayNewQueuePreview(preview) => {
+
         }
     }
 }
@@ -123,7 +131,21 @@ fn view(model: &Model) -> Node<Msg> {
             C!["column"],
             C!["spaced"],
             C!["in_border"],
-            h1![C!["spaced"], "Kolejka"],
+            h1![
+                C!["spaced"], 
+                "Kolejka",
+            ],
+            button![
+                C!["spaced"],
+                C!["to_the_right_inside_flex"],
+                "Odśwież podgląd kolejki",
+                ev(Ev::Click, |_| Msg::RefreshQueuePreview)
+            ],
+            div![
+                id!["queue_preview_frame"],
+                C!["column"],
+                C!["spaced"]
+            ]
         ]
     ]
 }
