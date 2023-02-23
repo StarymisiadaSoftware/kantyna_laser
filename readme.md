@@ -27,7 +27,6 @@ cargo install --force wasm-pack --version 0.9.1
 
 ## Building Website
 
-
 Go to the `website/` subfolder and run:
 
 `cargo make build_release`
@@ -45,6 +44,10 @@ Inside the `website/` directory, run:
 `cargo make serve`
 
 or using `microserver` directly:
+
+`microserver --port 8000`
+
+You'll need to change the port to `80` for "production".
 
 ## Running backend service
 
