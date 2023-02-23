@@ -7,11 +7,13 @@ use seed::{prelude::*, *};
 fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
     Model {
         youtube_url: "".to_owned(),
+        music_queue_preview: None
     }
 }
 
 struct Model {
     youtube_url: String,
+    music_queue_preview: Option<MusicQueuePreview>
 }
 
 #[derive(Debug, Clone)]
