@@ -7,6 +7,7 @@ TODO: Describe what I am
 * Rust
 * `wasm-pack` (version `0.9.1` is the NEWEST known to work)
 * `microserver`
+* `yt-dlp`
 * Optional: `cargo-make` (for using cargo to run all commands)
 
 
