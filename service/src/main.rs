@@ -9,7 +9,7 @@ use std::{
     sync::Arc,
 };
 use thiserror::Error;
-use tokio::{fs::OpenOptions, io::AsyncWriteExt, process::Command, sync::Mutex};
+use tokio::{fs::OpenOptions, io::AsyncWriteExt, sync::Mutex};
 
 pub mod util;
 use util::*;
