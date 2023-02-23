@@ -55,8 +55,12 @@ async fn enqueue(req_body: String) -> Result<String, MyError> {
     eprintln!("Received: {}", &req_body);
     let enqueue_request: EnqueueRequest = from_str(&req_body)?;
     let mut url = sanitize(enqueue_request.url)?;
-    url.push('\n');
-    append_to_file(std::path::Path::new("queue.txt"), url.as_bytes()).await?;
+    music_queue_instance.lock().await.enqueue(crate::song::Song {
+        url: url.clone(),
+        duration: None,
+        title: None,
+        miniature_url: None
+    });
     Ok(url)
 }
 
@@ -68,6 +72,19 @@ async fn main() -> std::io::Result<()> {
         .load()
         .await
         .map_err(anyhow_error_to_stdio_error)?;
+
+    tokio::spawn(async {
+        loop {
+            while let Some(song) = music_queue_instance.lock().await.pull_next() {
+                let hr = hook_runner_instance.lock().await;
+                hr.run_hooks(&song.url).await;
+            }
+
+            // todo: make it smarter
+            // Use a condvar or something
+            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+        }
+    });
 
     HttpServer::new(|| {
         App::new()

@@ -14,6 +14,7 @@ pub struct HookRunner {
 impl HookRunner {
     /// Completes when ALL of the hooks have finished processing
     pub async fn run_hooks(&self, url: &str) {
+        eprintln!("Running hooks for song: '{}'.",url);
         let command_iter = self.hooks
             .iter()
             .cloned()
@@ -43,6 +44,7 @@ impl HookRunner {
                     }
                 }
             }).await;
+        eprintln!("Done running hooks for song: '{}'.",url);
     }
     /// Load hooks from the hook_dir
     pub async fn load(&mut self) -> Result<()> {
