@@ -6,7 +6,7 @@ pub trait MusicQueueExt {
     fn enqueue(&mut self, song: Song);
     /// Returns song to be played now (if any)
     fn pull_next(&mut self) -> Option<Song>;
-    fn get_currently_played_song(&self) -> Option<&Song> ;
+    fn get_currently_played_song(&self) -> Option<&Song>;
 }
 
 impl MusicQueueExt for MusicQueue {

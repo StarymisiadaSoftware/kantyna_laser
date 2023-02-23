@@ -1,5 +1,5 @@
 use anyhow::Context;
-use common::{EnqueueRequest,Song,MusicQueue};
+use common::{EnqueueRequest, EnqueueRequestReply, MusicQueuePreview, Song};
 use js_sys::eval as js_eval;
 use seed::{prelude::*, *};
 // use gloo_net::http::Request;

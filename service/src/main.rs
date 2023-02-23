@@ -15,6 +15,7 @@ pub mod util;
 use util::*;
 
 pub mod song;
+use song::*;
 pub mod hook_runner;
 use hook_runner::*;
 
@@ -25,7 +26,6 @@ lazy_static! {
     pub static ref hook_runner_instance: Arc<Mutex<HookRunner>> = Default::default();
     pub static ref music_queue_instance: Arc<Mutex<MusicQueue>> = Default::default();
 }
-
 
 async fn append_to_file(a: &Path, data: &[u8]) -> Result<(), MyError> {
     let mut file = OpenOptions::new().append(true).open(a).await?;
@@ -55,12 +55,9 @@ async fn enqueue(req_body: String) -> Result<String, MyError> {
     eprintln!("Received: {}", &req_body);
     let enqueue_request: EnqueueRequest = from_str(&req_body)?;
     let mut url = sanitize(enqueue_request.url)?;
-    music_queue_instance.lock().await.enqueue(crate::song::Song {
-        url: url.clone(),
-        duration: None,
-        title: None,
-        miniature_url: None
-    });
+    let mut new_song = Song::new(&url);
+    let _ = new_song.load_from_ytdlp().await;
+    music_queue_instance.lock().await.enqueue(new_song);
     Ok(url)
 }
 
