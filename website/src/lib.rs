@@ -4,16 +4,19 @@ use js_sys::eval as js_eval;
 use seed::{prelude::*, *};
 // use gloo_net::http::Request;
 
-fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
+fn init(_: Url, o: &mut impl Orders<Msg>) -> Model {
+    let sender = o.send_msg(Msg::RefreshQueuePreview);
     Model {
         youtube_url: "".to_owned(),
-        music_queue_preview: None
+        music_queue_preview: None,
+        last_enqueue_request_reply: None,
     }
 }
 
 struct Model {
     youtube_url: String,
-    music_queue_preview: Option<MusicQueuePreview>
+    music_queue_preview: Option<Box<MusicQueuePreview>>,
+    last_enqueue_request_reply: Option<Box<EnqueueRequestReply>>,
 }
 
 #[derive(Debug, Clone)]
@@ -21,10 +24,10 @@ enum Msg {
     InputValue(String),
     Submit,
     RefreshQueuePreview,
-    DisplayNewQueuePreview(Box<MusicQueuePreview>)
+    DisplayNewQueuePreview(Box<MusicQueuePreview>),
 }
 
-fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, o: &mut impl Orders<Msg>) {
     match msg {
         Msg::Submit => {
             log!("Inside Submit handler.");
@@ -33,12 +36,13 @@ fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
         Msg::InputValue(url) => {
             log!("Handling URL change: ", &url);
             model.youtube_url = url;
-        },
+        }
         Msg::RefreshQueuePreview => {
-
-        },
+            log!("TODO: Send the request to obtain queue preview");
+        }
         Msg::DisplayNewQueuePreview(preview) => {
-
+            model.music_queue_preview = Some(preview);
+            o.render();
         }
     }
 }
@@ -90,16 +94,88 @@ fn run_submit(url: String) {
 }
 
 fn view(model: &Model) -> Node<Msg> {
+    let show_song = |song: &Song| {
+        div![
+            p!["Todo: image"],
+            div![
+                p![song.title.clone().unwrap_or_default()],
+                i![&song.url],
+                i![format!("Seconds of length: {}", song.duration.unwrap_or(0))]
+            ]
+        ]
+    };
+    let queue_preview = {
+        match &model.music_queue_preview {
+            Some(queue_preview) => {
+                let queue = &queue_preview.queue;
+                let mut queued_songs = Vec::new();
+                for i in &queue.queue {
+                    queued_songs.push(show_song(i));
+                }
+                div![
+                    C!["column"],
+                    div![
+                        id!["current_song"],
+                        if let Some(cp) = &queue.currently_played {
+                            show_song(cp)
+                        } else {
+                            i!["Obecnie nic nie jest odtwarzane"]
+                        }
+                    ],
+                    div![id!["queued_songs"], queued_songs],
+                    i!["Todo: total length"]
+                ]
+            }
+            None => {
+                i!["Nie ma nic do pokazania"]
+            }
+        }
+    };
+    let message_box_content = {
+        match &model.last_enqueue_request_reply {
+            Some(reply) => {
+                let ct = match reply.error_message.as_ref() {
+                    Some(error_msg) => {
+                        b![format!("Error occured: {}", error_msg)]
+                    }
+                    None => {
+                        div![
+                            C!["column"],
+                            h3!["Your song has been added to the queue."],
+                            p![format!(
+                                "Position in queue: {}",
+                                reply.pos_in_queue.unwrap_or(0)
+                            )],
+                            p![format!("TTW: {}", reply.time_to_wait.unwrap_or(0))],
+                            if let Some(s) = &reply.song_info.as_ref() {
+                                show_song(s)
+                            } else {
+                                i!["No song info"]
+                            }
+                        ]
+                    }
+                };
+                div![id!["message_box_content"], ct]
+            }
+            None => {
+                // Meant to be empty
+                p![]
+            }
+        }
+    };
     div![
         C!["column"],
+        // Encompasses the whole screen
         id!["top_frame"],
         div![
+            // Contains the form and the message area
             id!["url_frame"],
             C!["spaced"],
             C!["column"],
             C!["in_border"],
             h1![C!["spaced"], "Dodaj do kolejki"],
             div![
+                // Contains the form
                 id!["input_frame"],
                 C!["in_border"],
                 C!["column"],
@@ -120,21 +196,14 @@ fn view(model: &Model) -> Node<Msg> {
                     ]
                 ],
             ],
-            p![
-                C!["spaced"],
-                style! {St::TextAlign => "center"},
-                "Po kliknięciu na guzior nie pojawi się żaden komunikat jak coś."
-            ],
+            message_box_content
         ],
         div![
             id!["queue_frame"],
             C!["column"],
             C!["spaced"],
             C!["in_border"],
-            h1![
-                C!["spaced"], 
-                "Kolejka",
-            ],
+            h1![C!["spaced"], "Kolejka",],
             button![
                 C!["spaced"],
                 C!["to_the_right_inside_flex"],
@@ -144,7 +213,8 @@ fn view(model: &Model) -> Node<Msg> {
             div![
                 id!["queue_preview_frame"],
                 C!["column"],
-                C!["spaced"]
+                C!["spaced"],
+                queue_preview
             ]
         ]
     ]

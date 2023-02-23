@@ -1,14 +1,12 @@
 use actix_cors::Cors;
-use actix_web::{dev::Service, post, get, App, HttpResponse, HttpServer, Responder, ResponseError};
+use actix_web::{dev::Service, get, post, App, HttpResponse, HttpServer, Responder, ResponseError};
 use anyhow::Result;
-use common::{EnqueueRequest,EnqueueRequestReply, MusicQueuePreview};
+use common::{EnqueueRequest, EnqueueRequestReply, MusicQueuePreview};
 use lazy_static::lazy_static;
 use serde_json::from_str;
-use std::{
-    sync::Arc,
-};
+use std::sync::Arc;
 use thiserror::Error;
-use tokio::{sync::Mutex};
+use tokio::sync::Mutex;
 
 pub mod util;
 use util::*;
@@ -54,18 +52,18 @@ async fn enqueue(req_body: String) -> impl Responder {
         let _ = new_song.load_from_ytdlp().await;
         let _ = new_song.validate();
         music_queue_instance.lock().await.enqueue(new_song.clone());
-        Ok::<Song,MyError>(new_song)
+        Ok::<Song, MyError>(new_song)
     };
     match try_.await {
         Ok(res) => {
-            let reply = EnqueueRequestReply{
+            let reply = EnqueueRequestReply {
                 error_message: None,
                 pos_in_queue: None,
                 time_to_wait: None,
-                song_info: Some(res)
+                song_info: Some(res),
             };
             HttpResponse::Accepted().json(reply)
-        },
+        }
         Err(e) => {
             let reply = EnqueueRequestReply::from_err(e);
             HttpResponse::Forbidden().json(reply)
@@ -76,9 +74,7 @@ async fn enqueue(req_body: String) -> impl Responder {
 #[get("/preview_queue")]
 async fn preview_queue() -> impl Responder {
     let q = music_queue_instance.lock().await.clone();
-    HttpResponse::Ok().json(MusicQueuePreview{
-        queue: q
-    })
+    HttpResponse::Ok().json(MusicQueuePreview { queue: q })
 }
 
 #[actix_web::main]
