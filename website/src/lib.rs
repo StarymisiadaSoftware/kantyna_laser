@@ -2,6 +2,7 @@ use anyhow::Context;
 use common::{EnqueueRequest, EnqueueRequestReply, MusicQueuePreview, Song};
 use js_sys::eval as js_eval;
 use seed::{prelude::*, *};
+use wasm_bindgen_futures::spawn_local;
 // use gloo_net::http::Request;
 
 fn init(_: Url, o: &mut impl Orders<Msg>) -> Model {
@@ -27,48 +28,72 @@ enum Msg {
     DisplayNewQueuePreview(Box<MusicQueuePreview>),
 }
 
+type MsgSender = std::rc::Rc<dyn Fn(Option<Msg>)>;
+
 fn update(msg: Msg, model: &mut Model, o: &mut impl Orders<Msg>) {
     match msg {
         Msg::Submit => {
             log!("Inside Submit handler.");
-            run_submit(model.youtube_url.clone());
+            let sender = o.skip().msg_sender();
+            run_submit(sender,model.youtube_url.clone());
         }
         Msg::InputValue(url) => {
             log!("Handling URL change: ", &url);
+            o.skip();
             model.youtube_url = url;
         }
         Msg::RefreshQueuePreview => {
-            log!("TODO: Send the request to obtain queue preview");
+            let sender = o.skip().msg_sender();
+            run_refresh_queue(sender);
+            
         }
         Msg::DisplayNewQueuePreview(preview) => {
             model.music_queue_preview = Some(preview);
-            o.render();
+            // This happens by default
+            // o.render();
         }
     }
 }
 
-fn run_submit(url: String) {
+fn get_endpoint_base() -> anyhow::Result<String> {
     let endpoint = js_eval(
         r#"
             window.location.hostname
         "#,
     );
+    let Ok(Some(endpoint)) = endpoint.map(|x| x.as_string()) else {
+        anyhow::bail!("'window.location.host' could not be evaluated to a string.");
+    };
+    log!("Got endpoint from JS: ", &endpoint);
+    let endpoint = endpoint.replace("?", "");
+    //let mut endpoint = endpoint.replace("8080", "8090");
+    //endpoint.push_str(":8090/enqueue");
+    let endpoint = format!("http://{}:8090", endpoint);
+    Ok(endpoint)
+}
+
+fn run_refresh_queue(msg_sender: MsgSender) {
+    let inner = move ||{
+        // spawn_local(async move {
+        //     sender(Some(Msg::Submit));
+        // });
+        anyhow::Ok(())
+    };
+    if let Err(e) = inner() {
+        log!(e);
+    }
+}
+
+fn run_submit(msg_sender: MsgSender, url: String) {
     let inner = move || {
-        let Ok(Some(endpoint)) = endpoint.map(|x| x.as_string()) else {
-            anyhow::bail!("'window.location.host' could not be evaluated to a string.");
-        };
-        log!("Got endpoint from JS: ", &endpoint);
-        let endpoint = endpoint.replace("?", "");
-        //let mut endpoint = endpoint.replace("8080", "8090");
-        //endpoint.push_str(":8090/enqueue");
-        let endpoint = format!("http://{}:8090/enqueue", endpoint);
-        log!("Final endpoint: ", &endpoint);
+        let endpoint = format!("{}/enqueue", get_endpoint_base()?);
+        log!("[Submit] Final endpoint: ", &endpoint);
         let post = Request::new(endpoint)
             .method(Method::Post)
             .json(&EnqueueRequest { url });
         match post {
             Ok(r) => {
-                wasm_bindgen_futures::spawn_local(async move {
+                spawn_local(async move {
                     log!("Hello from POST-sending future.");
                     match r.fetch().await {
                         Ok(res) => {
