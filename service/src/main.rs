@@ -3,7 +3,7 @@ use actix_web::{dev::Service, post, App, HttpResponse, HttpServer, Responder, Re
 use anyhow::Result;
 use common::EnqueueRequest;
 use serde_json::from_str;
-use std::{borrow::Borrow, path::Path};
+use std::{path::Path};
 use thiserror::Error;
 use tokio::{fs::OpenOptions, io::AsyncWriteExt};
 
@@ -12,6 +12,7 @@ async fn append_to_file(a: &Path, data: &[u8]) -> Result<(), MyError> {
     Ok(file.write_all(data).await?)
 }
 
+/// Todo: Only allow youtube urls
 fn sanitize(youtube_url: String) -> Result<String, MyError> {
     let sanitized = youtube_url;
     Ok(sanitized)
