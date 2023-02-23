@@ -1,15 +1,14 @@
 use actix_cors::Cors;
-use actix_web::{dev::Service, post, App, HttpResponse, HttpServer, Responder, ResponseError};
+use actix_web::{dev::Service, post, get, App, HttpResponse, HttpServer, Responder, ResponseError};
 use anyhow::Result;
-use common::EnqueueRequest;
+use common::{EnqueueRequest,EnqueueRequestReply, MusicQueuePreview};
 use lazy_static::lazy_static;
 use serde_json::from_str;
 use std::{
-    path::{Path, PathBuf},
     sync::Arc,
 };
 use thiserror::Error;
-use tokio::{fs::OpenOptions, io::AsyncWriteExt, sync::Mutex};
+use tokio::{sync::Mutex};
 
 pub mod util;
 use util::*;
@@ -25,11 +24,6 @@ use music_queue::*;
 lazy_static! {
     pub static ref hook_runner_instance: Arc<Mutex<HookRunner>> = Default::default();
     pub static ref music_queue_instance: Arc<Mutex<MusicQueue>> = Default::default();
-}
-
-async fn append_to_file(a: &Path, data: &[u8]) -> Result<(), MyError> {
-    let mut file = OpenOptions::new().append(true).open(a).await?;
-    Ok(file.write_all(data).await?)
 }
 
 /// Todo: Only allow youtube urls
@@ -51,14 +45,40 @@ impl ResponseError for MyError {
 }
 
 #[post("/enqueue")]
-async fn enqueue(req_body: String) -> Result<String, MyError> {
+async fn enqueue(req_body: String) -> impl Responder {
     eprintln!("Received: {}", &req_body);
-    let enqueue_request: EnqueueRequest = from_str(&req_body)?;
-    let mut url = sanitize(enqueue_request.url)?;
-    let mut new_song = Song::new(&url);
-    let _ = new_song.load_from_ytdlp().await;
-    music_queue_instance.lock().await.enqueue(new_song);
-    Ok(url)
+    let try_ = async {
+        let enqueue_request: EnqueueRequest = from_str(&req_body)?;
+        let mut url = sanitize(enqueue_request.url)?;
+        let mut new_song = Song::new(&url);
+        let _ = new_song.load_from_ytdlp().await;
+        let _ = new_song.validate();
+        music_queue_instance.lock().await.enqueue(new_song.clone());
+        Ok::<Song,MyError>(new_song)
+    };
+    match try_.await {
+        Ok(res) => {
+            let reply = EnqueueRequestReply{
+                error_message: None,
+                pos_in_queue: None,
+                time_to_wait: None,
+                song_info: Some(res)
+            };
+            HttpResponse::Accepted().json(reply)
+        },
+        Err(e) => {
+            let reply = EnqueueRequestReply::from_err(e);
+            HttpResponse::Forbidden().json(reply)
+        }
+    }
+}
+
+#[get("/preview_queue")]
+async fn preview_queue() -> impl Responder {
+    let q = music_queue_instance.lock().await.clone();
+    HttpResponse::Ok().json(MusicQueuePreview{
+        queue: q
+    })
 }
 
 #[actix_web::main]
@@ -86,6 +106,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .service(enqueue)
+            .service(preview_queue)
             .wrap(
                 Cors::default()
                     .allow_any_origin()

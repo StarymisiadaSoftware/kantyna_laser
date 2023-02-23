@@ -16,6 +16,12 @@ pub struct EnqueueRequestReply {
     pub song_info: Option<Song>,
 }
 
+impl EnqueueRequestReply {
+    pub fn from_err(err: impl std::error::Error) -> Self {
+        Self { error_message: Some(err.to_string()), pos_in_queue: None, time_to_wait: None, song_info: None }
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Song {
     pub url: String,
