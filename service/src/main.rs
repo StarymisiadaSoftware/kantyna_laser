@@ -3,9 +3,32 @@ use actix_web::{dev::Service, post, App, HttpResponse, HttpServer, Responder, Re
 use anyhow::Result;
 use common::EnqueueRequest;
 use serde_json::from_str;
-use std::{path::Path};
+use std::{path::{Path, PathBuf}};
 use thiserror::Error;
 use tokio::{fs::OpenOptions, io::AsyncWriteExt};
+
+struct Song {
+    url: String,
+    /// in seconds
+    duration: Option<u16>,
+    title: Option<String>,
+    miniature_url: Option<String>
+}
+
+struct MusicQueue {
+    queue: Vec<Song>,
+    currently_played: Option<Song>
+}
+struct HookRunner {
+    hooks: Vec<PathBuf>
+}
+
+impl HookRunner {
+    /// Completes when ALL of the hooks have finished processing
+    async fn run_hooks(&self) {
+
+    }
+}
 
 async fn append_to_file(a: &Path, data: &[u8]) -> Result<(), MyError> {
     let mut file = OpenOptions::new().append(true).open(a).await?;
