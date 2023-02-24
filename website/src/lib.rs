@@ -255,7 +255,10 @@ fn view(model: &Model) -> Node<Msg> {
             },
             div![
                 C!["column"],
-                p![song.title.clone().unwrap_or_default()],
+                p![b![
+                    style!(St::Color => "blueviolet"),
+                    song.title.clone().unwrap_or_default()
+                ]],
                 i![a![attrs! {At::Href => &song.url}, &song.url]],
                 i![format!(
                     "Długość: {}",
@@ -325,18 +328,24 @@ fn view(model: &Model) -> Node<Msg> {
                                 style! {St::Color => "green"},
                                 "Twoja piosenka została dodana do kolejki."
                             ],
-                            p![format!(
-                                "Pozycja w kolejce: {}",
-                                reply.pos_in_queue.unwrap_or(0)
-                            )],
-                            p![format!(
-                                "Szacowany czas oczekiwania: {}",
-                                pretty_print_seconds(reply.time_to_wait.unwrap_or(0))
-                            )],
+                            p![
+                                style!(St::Color => "blueviolet"),
+                                format!("Pozycja w kolejce: {}", reply.pos_in_queue.unwrap_or(0))
+                            ],
+                            p![
+                                style!(St::Color => "blueviolet"),
+                                format!(
+                                    "Szacowany czas oczekiwania: {}",
+                                    pretty_print_seconds(reply.time_to_wait.unwrap_or(0))
+                                )
+                            ],
                             if let Some(s) = &reply.song_info.as_ref() {
                                 show_song(s)
                             } else {
-                                i!["Brak informacji o piosence"]
+                                i![
+                                    style!(St::Color => "blueviolet"),
+                                    "Brak informacji o piosence"
+                                ]
                             }
                         ]
                     }
