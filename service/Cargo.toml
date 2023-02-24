@@ -18,3 +18,4 @@ common = { path = "../common" }
 lazy_static = "1"
 async-trait = "0.1"
 futures-util = "0.3"
+regex = "1"

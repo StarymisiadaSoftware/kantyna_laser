@@ -1,7 +1,6 @@
 #![allow(non_upper_case_globals)]
 use actix_cors::Cors;
 use actix_web::{dev::Service, get, post, App, HttpResponse, HttpServer, Responder, ResponseError};
-use anyhow::Result;
 use common::{EnqueueRequest, EnqueueRequestReply, MusicQueuePreview};
 use lazy_static::lazy_static;
 use serde_json::from_str;
@@ -25,14 +24,8 @@ lazy_static! {
     pub static ref music_queue_instance: Arc<Mutex<MusicQueue>> = Default::default();
 }
 
-/// Todo: Only allow youtube urls
-fn sanitize(youtube_url: String) -> Result<String, MyError> {
-    let sanitized = youtube_url;
-    Ok(sanitized)
-}
-
 #[derive(Debug, Error)]
-enum MyError {
+pub enum MyError {
     #[error("Failed to deserialize the JSON: {0}")]
     DeserializationError(#[from] serde_json::Error),
     #[error("Unable to perform I/O operation: {0}")]
