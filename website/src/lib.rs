@@ -322,6 +322,7 @@ fn view(model: &Model) -> Node<Msg> {
                 let ct = match reply.error_message.as_ref() {
                     Some(error_msg) => {
                         h3![
+                            C!["spaced"],
                             style! {St::Color => "red"},
                             "Wystąpił błąd:",
                             br![],
@@ -330,6 +331,7 @@ fn view(model: &Model) -> Node<Msg> {
                     }
                     None => {
                         div![
+                            C!["spaced"],
                             C!["column"],
                             h3![
                                 style! {St::Color => "green"},
@@ -360,7 +362,7 @@ fn view(model: &Model) -> Node<Msg> {
                 ct
             }
             MessageBoxContent::LoadingScreen => {
-                h3![style!(St::Color => "pink"), "Ładowanie..."]
+                h3![C!["spaced"], style!(St::Color => "pink"), "Ładowanie..."]
             }
             MessageBoxContent::Nothing => {
                 empty![]
