@@ -245,7 +245,7 @@ fn view(model: &Model) -> Node<Msg> {
                 Some(m) => {
                     img![
                         attrs!(At::Src => m),
-                        style!(St::MaxWidth => "100px", St::MaxHeight => "100px")
+                        style!(St::MaxWidth => "100px", St::MaxHeight => "100px", St::MarginRight => "5px")
                     ]
                     .into_nodes()
                 }
