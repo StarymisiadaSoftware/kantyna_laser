@@ -331,7 +331,7 @@ fn view(model: &Model) -> Node<Msg> {
                             )],
                             p![format!(
                                 "Szacowany czas oczekiwania: {}",
-                                reply.time_to_wait.unwrap_or(0)
+                                pretty_print_seconds(reply.time_to_wait.unwrap_or(0))
                             )],
                             if let Some(s) = &reply.song_info.as_ref() {
                                 show_song(s)
