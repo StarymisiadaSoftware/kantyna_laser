@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use futures_util::stream::{self, StreamExt, TryStreamExt};
-use std::path::PathBuf;
-use tokio::{fs::read_dir, process::Command};
+use std::{path::PathBuf,process::{Stdio}};
+use tokio::{fs::read_dir, process::{Command}};
 
 #[derive(Default, Debug)]
 pub struct HookRunner {
@@ -15,6 +15,8 @@ impl HookRunner {
         let command_iter = self.hooks.iter().cloned().map(|x| {
             let mut command = Command::new(&x);
             command.env("KANTYNA_LASER_URL", url);
+            command.stdin(Stdio::null());
+            //command.stdout(Stdio::null());
             (command, x)
         });
         stream::iter(command_iter)
