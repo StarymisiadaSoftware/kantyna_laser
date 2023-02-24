@@ -237,6 +237,7 @@ fn run_submit(msg_sender: MsgSender, url: String) {
 fn view(model: &Model) -> Node<Msg> {
     let show_song = |song: &Song| {
         div![
+            C!["spaced"],
             C!["row"],
             C!["curly_border"],
             C!["in_border"],
@@ -310,10 +311,12 @@ fn view(model: &Model) -> Node<Msg> {
             MessageBoxContent::EnqueueRequestReply(reply) => {
                 let ct = match reply.error_message.as_ref() {
                     Some(error_msg) => {
-                        h3![em![
+                        h3![
                             style! {St::Color => "red"},
-                            format!("Wystąpił błąd\n: {}", error_msg)
-                        ]]
+                            "Wystąpił błąd:",
+                            br![],
+                            code![error_msg]
+                        ]
                     }
                     None => {
                         div![
