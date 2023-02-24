@@ -256,11 +256,13 @@ fn view(model: &Model) -> Node<Msg> {
             },
             div![
                 C!["column"],
-                p![b![
-                    style!(St::Color => "blueviolet"),
-                    song.title.clone().unwrap_or_default()
-                ]],
-                i![a![attrs! {At::Href => &song.url}, &song.url]],
+                a![
+                    attrs! {At::Href => &song.url},
+                    p![b![
+                        style!(St::Color => "blueviolet"),
+                        song.title.clone().unwrap_or_default()
+                    ]]
+                ],
                 i![format!(
                     "Długość: {}",
                     pretty_print_seconds(song.duration.unwrap_or(0) as u32)
