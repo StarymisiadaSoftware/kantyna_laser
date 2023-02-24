@@ -124,7 +124,7 @@ async fn main() -> std::io::Result<()> {
                 let fut = srv.call(req);
                 async {
                     let res = fut.await?;
-                    eprintln!("{}: {:?}", res.response().status(), res.response().body());
+                    //eprintln!("{}: {:?}", res.response().status(), res.response().body());
                     Ok(res)
                 }
             })

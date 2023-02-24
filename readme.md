@@ -55,7 +55,13 @@ You'll need to change the port to `80` for "production".
 
 `cargo run -r -p service`
 
+Song queue is currently held in-memory.
 Position in the queue can only advance when ALL hooks finish executing.
+Playback is expected to be managed by hooks.
+At `service/hooks` you can find some ready-made hooks, one of which plays songs using `mpv` (written in Python).
+
+Backend listens on port `8090`.
+This is currently hard-coded.
 
 ### Hook dir
 
@@ -66,3 +72,15 @@ If the variable doesn't exist the backend will attempt to read `hooks/` director
 
 Just put anything runnable in your hooks directory.
 The backend sets `KANTYNA_LASER_URL` environment variable to the URL of the song to be played.
+You can read that value and do anything you want with it.
+
+## API Reference
+
+Reference for the backend's API
+
+### *GET* `/preview_queue`
+
+Todo: Document it
+### *POST* `/enqueue`
+
+Todo: Document it
