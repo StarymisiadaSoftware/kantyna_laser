@@ -7,6 +7,9 @@ and give the guests the IP address so that everyone can access the site and add 
 
 **Currently the UI is available in Polish only**
 
+![image](https://user-images.githubusercontent.com/48153724/221262520-860fc13b-f8e4-41f9-a4c7-75ba9931f0f9.png)
+
+
 ## Requirements
 
 **Currently only tested on Linux**
