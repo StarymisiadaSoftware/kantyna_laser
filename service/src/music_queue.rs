@@ -12,11 +12,14 @@ pub trait MusicQueueExt {
 
 impl MusicQueueExt for MusicQueue {
     fn enqueue(&mut self, song: Song) -> (u32, usize) {
-        let ttw = self
+        let mut ttw = self
             .queue
             .iter()
             .map(|s| s.duration.unwrap_or(0) as u32)
             .sum();
+        if let Some(cp_dur) = self.currently_played.as_ref().and_then(|x| x.duration) {
+            ttw += cp_dur as u32;
+        }
         self.queue.push_back(song);
         let queue_pos = self.queue.len();
         (ttw, queue_pos)

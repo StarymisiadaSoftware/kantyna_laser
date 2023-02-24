@@ -276,7 +276,12 @@ fn view(model: &Model) -> Node<Msg> {
                 let mut queued_songs = Vec::new();
                 for i in &queue.queue {
                     queued_songs.push(show_song(i));
-                    total_queue_length += i.duration.unwrap_or(0) as u32;
+                    total_queue_length += i.duration.unwrap_or(0) as u32
+                        + queue
+                            .currently_played
+                            .as_ref()
+                            .and_then(|x| x.duration)
+                            .unwrap_or(0) as u32;
                 }
                 div![
                     C!["column"],
