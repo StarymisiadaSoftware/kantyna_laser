@@ -47,7 +47,7 @@ impl SongExt for Song {
             ));
         }
         let json = serde_json::from_slice::<YtDlpJson>(&output.stdout)?;
-        self.miniature_url = Some(json.thumbnail);
+        self.thumbnail_url = Some(json.thumbnail);
         self.duration = Some(json.duration);
         self.title = Some(json.title);
         Ok(())

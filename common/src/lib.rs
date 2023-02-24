@@ -44,7 +44,7 @@ pub struct Song {
     /// in seconds
     pub duration: Option<u16>,
     pub title: Option<String>,
-    pub miniature_url: Option<String>,
+    pub thumbnail_url: Option<String>,
 }
 
 impl Song {
@@ -53,7 +53,7 @@ impl Song {
             url: url.to_owned(),
             duration: None,
             title: None,
-            miniature_url: None,
+            thumbnail_url: None,
         }
     }
 }

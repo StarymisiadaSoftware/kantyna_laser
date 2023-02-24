@@ -240,7 +240,7 @@ fn view(model: &Model) -> Node<Msg> {
             C!["in_border"],
             C!["in_padding"],
             C!["nice_background"],
-            match &song.miniature_url {
+            match &song.thumbnail_url {
                 Some(m) => {
                     img![
                         attrs!(At::Src => m),
