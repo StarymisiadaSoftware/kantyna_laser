@@ -1,12 +1,23 @@
 use anyhow::Context;
 use common::{EnqueueRequest, EnqueueRequestReply, MusicQueuePreview, Song};
+use gloo_timers::future::TimeoutFuture;
 use js_sys::eval as js_eval;
 use seed::{prelude::*, *};
+use serde_json::from_str;
 use wasm_bindgen_futures::spawn_local;
 // use gloo_net::http::Request;
 
 fn init(_: Url, o: &mut impl Orders<Msg>) -> Model {
-    let sender = o.send_msg(Msg::RefreshQueuePreview);
+    o.send_msg(Msg::RefreshQueuePreview);
+    let msg_sender = o.msg_sender();
+    spawn_local(async move {
+        log!("[Auto Queue Refresh Loop] Started automatic queue refresh loop.");
+        loop {
+            TimeoutFuture::new(15_000).await;
+            log!("[Auto Queue Refresh Loop] Issuing automatic queue refresh.");
+            msg_sender(Some(Msg::RefreshQueuePreview));
+        }
+    });
     Model {
         youtube_url: "".to_owned(),
         music_queue_preview: None,
@@ -25,7 +36,9 @@ enum Msg {
     InputValue(String),
     Submit,
     RefreshQueuePreview,
+    ShowEnqueueProcessingScreen,
     DisplayNewQueuePreview(Box<MusicQueuePreview>),
+    DisplayEnqueueRequestReply(Box<EnqueueRequestReply>)
 }
 
 type MsgSender = std::rc::Rc<dyn Fn(Option<Msg>)>;
@@ -51,6 +64,14 @@ fn update(msg: Msg, model: &mut Model, o: &mut impl Orders<Msg>) {
             model.music_queue_preview = Some(preview);
             // This happens by default
             // o.render();
+        },
+        Msg::DisplayEnqueueRequestReply(reply) => {
+            model.last_enqueue_request_reply = Some(reply);
+            // This happens by default
+            // o.render();
+        },
+        Msg::ShowEnqueueProcessingScreen => {
+            model.last_enqueue_request_reply = Some(Box::from(EnqueueRequestReply::from_err_msg("Ładowanie...")));
         }
     }
 }
@@ -72,15 +93,76 @@ fn get_endpoint_base() -> anyhow::Result<String> {
     Ok(endpoint)
 }
 
+fn pretty_print_seconds(seconds_total: u32) -> String {
+    let minutes_total = seconds_total / 60;
+    let hours_total = minutes_total / 60;
+    let days = hours_total / 24;
+    let hours = hours_total - days * 24;
+    let minutes = minutes_total - hours_total * 60;
+    let seconds = seconds_total - minutes_total * 60;
+
+    let mut ret = String::new();
+
+    if days > 0 {
+        ret.push_str(&format!("{} dni ", days));
+    }
+    if hours > 0 {
+        ret.push_str(&format!("{} godzin ", hours));
+    }
+    if minutes > 0 {
+        ret.push_str(&format!("{} minut ", minutes));
+    }
+    ret.push_str(&format!("{} sekund ", seconds));
+    ret
+
+}
+
 fn run_refresh_queue(msg_sender: MsgSender) {
     let inner = move ||{
-        // spawn_local(async move {
-        //     sender(Some(Msg::Submit));
-        // });
+        let endpoint = format!("{}/preview_queue", get_endpoint_base()?);
+        log!("[Refresh Queue] Final endpoint: ", &endpoint);
+        spawn_local(async move {
+            log!("[Refresh Queue] Sending GET request...");
+            let rq = Request::new(endpoint)
+                .method(Method::Get)
+                .fetch();
+            match rq.await {
+                Ok(res) => {
+                    let text = res.text().await;
+                    log!("[Refresh Queue] Got response: ", &text);
+                    match text.map(|txt| from_str::<MusicQueuePreview>(&txt)) {
+                        Ok(Ok(reply)) => {
+                            log!("[Refresh Queue] Reply has been deserialized successfully.");
+                            msg_sender(Some(Msg::DisplayNewQueuePreview(Box::from(reply))));
+                        },
+                        Ok(Err(se)) => {
+                            let e = format!("Failed to deserialize reply: {:?}", se);
+                            log!("[Refresh Queue] ", e);
+                            let reply = EnqueueRequestReply::from_err_msg(&e);
+                            msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(reply))));
+                        }
+                        Err(e) => {
+                            let e = format!("Failed to get a response: {:?}", e);
+                            log!("[Refresh Queue] ", e);
+                            let reply = EnqueueRequestReply::from_err_msg(&e);
+                            msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(reply))));
+                        }
+                    }
+                },
+                Err(e) => {
+                    let e = format!("Failed to send request: {:?}", e);
+                    log!("[Refresh Queue] ", e);
+                    let reply = EnqueueRequestReply::from_err_msg(&e);
+                    msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(reply))));
+                }
+            }
+            log!("[Refresh Queue] GET-sending future completes.");
+        });
+
         anyhow::Ok(())
     };
     if let Err(e) = inner() {
-        log!(e);
+        log!("[Refresh Queue] ",e);
     }
 }
 
@@ -94,17 +176,43 @@ fn run_submit(msg_sender: MsgSender, url: String) {
         match post {
             Ok(r) => {
                 spawn_local(async move {
-                    log!("Hello from POST-sending future.");
+                    msg_sender(Some(Msg::ShowEnqueueProcessingScreen));
+                    log!("[Submit] Sending POST request...");
                     match r.fetch().await {
                         Ok(res) => {
-                            log!("Got response: {:?}", res.text().await);
+                            let text = res.text().await;
+                            log!("[Submit] Got response: ", &text);
+                            match text.map(|txt| from_str::<EnqueueRequestReply>(&txt)) {
+                                Ok(Ok(reply)) => {
+                                    log!("[Submit] Reply has been deserialized successfully.");
+                                    msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(reply))));
+                                    spawn_local(async move {
+                                        TimeoutFuture::new(1_000).await;
+                                        msg_sender(Some(Msg::RefreshQueuePreview));
+                                    });
+                                },
+                                Ok(Err(se)) => {
+                                    let e = format!("Failed to deserialize reply: {:?}", se);
+                                    log!("[Submit] ", e);
+                                    let reply = EnqueueRequestReply::from_err_msg(&e);
+                                    msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(reply))));
+                                }
+                                Err(e) => {
+                                    let e = format!("Failed to get a response: {:?}", e);
+                                    log!("[Submit] ", e);
+                                    let reply = EnqueueRequestReply::from_err_msg(&e);
+                                    msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(reply))));
+                                }
+                            }
                         }
                         Err(e) => {
-                            let e = format!("{:?}", e);
-                            log!("Failed to send request: ", e);
+                            let e = format!("Failed to send request: {:?}", e);
+                            log!("[Submit] ", e);
+                            let reply = EnqueueRequestReply::from_err_msg(&e);
+                            msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(reply))));
                         }
                     }
-                    log!("POST-sending future completes.");
+                    log!("[Submit] POST-sending future completes.");
                 });
             }
             Err(e) => {
@@ -114,18 +222,27 @@ fn run_submit(msg_sender: MsgSender, url: String) {
         anyhow::Ok(())
     };
     if let Err(e) = inner() {
-        log!(e);
+        log!("[Submit] ",e);
     }
 }
 
 fn view(model: &Model) -> Node<Msg> {
     let show_song = |song: &Song| {
         div![
-            p!["Todo: image"],
+            C!["row"],
+            match &song.miniature_url {
+                Some(m) => {
+                    img![attrs!(At::Src => m)].into_nodes()
+                },
+                None => {
+                    i!["No image"].into_nodes()
+                }
+            },
             div![
+                C!["column"],
                 p![song.title.clone().unwrap_or_default()],
                 i![&song.url],
-                i![format!("Seconds of length: {}", song.duration.unwrap_or(0))]
+                i![format!("Długość: {}", pretty_print_seconds(song.duration.unwrap_or(0) as u32))]
             ]
         ]
     };
@@ -133,12 +250,15 @@ fn view(model: &Model) -> Node<Msg> {
         match &model.music_queue_preview {
             Some(queue_preview) => {
                 let queue = &queue_preview.queue;
+                let mut total_queue_length : u32 = 0;
                 let mut queued_songs = Vec::new();
                 for i in &queue.queue {
                     queued_songs.push(show_song(i));
+                    total_queue_length += i.duration.unwrap_or(0) as u32;
                 }
                 div![
                     C!["column"],
+                    h3!["Obecnie odtwarzane"],
                     div![
                         id!["current_song"],
                         if let Some(cp) = &queue.currently_played {
@@ -147,8 +267,13 @@ fn view(model: &Model) -> Node<Msg> {
                             i!["Obecnie nic nie jest odtwarzane"]
                         }
                     ],
-                    div![id!["queued_songs"], queued_songs],
-                    i!["Todo: total length"]
+                    h3!["Następnie"],
+                    div![id!["queued_songs"], if queued_songs.is_empty() {
+                        i!["Nie ma dalej nic w kolejce"].into_nodes()
+                    } else {
+                        queued_songs.into_nodes()
+                    }],
+                    i![format!("Całkowita długość: {}",pretty_print_seconds(total_queue_length))]
                 ]
             }
             None => {
@@ -161,17 +286,17 @@ fn view(model: &Model) -> Node<Msg> {
             Some(reply) => {
                 let ct = match reply.error_message.as_ref() {
                     Some(error_msg) => {
-                        b![format!("Error occured: {}", error_msg)]
+                        b![error_msg]
                     }
                     None => {
                         div![
                             C!["column"],
-                            h3!["Your song has been added to the queue."],
+                            h3!["Twoja piosenka została dodana do kolejki."],
                             p![format!(
-                                "Position in queue: {}",
+                                "Pozycja w kolejce: {}",
                                 reply.pos_in_queue.unwrap_or(0)
                             )],
-                            p![format!("TTW: {}", reply.time_to_wait.unwrap_or(0))],
+                            p![format!("Szacowany czas oczekiwania: {}", reply.time_to_wait.unwrap_or(0))],
                             if let Some(s) = &reply.song_info.as_ref() {
                                 show_song(s)
                             } else {
@@ -232,7 +357,7 @@ fn view(model: &Model) -> Node<Msg> {
             button![
                 C!["spaced"],
                 C!["to_the_right_inside_flex"],
-                "Odśwież podgląd kolejki",
+                "↻",
                 ev(Ev::Click, |_| Msg::RefreshQueuePreview)
             ],
             div![

@@ -6,7 +6,7 @@ pub struct EnqueueRequest {
     pub url: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnqueueRequestReply {
     /// Not empty upon error
     pub error_message: Option<String>,
@@ -20,6 +20,14 @@ impl EnqueueRequestReply {
     pub fn from_err(err: impl std::error::Error) -> Self {
         Self {
             error_message: Some(err.to_string()),
+            pos_in_queue: None,
+            time_to_wait: None,
+            song_info: None,
+        }
+    }
+    pub fn from_err_msg(err_msg: &str) -> Self {
+        Self {
+            error_message: Some(err_msg.to_owned()),
             pos_in_queue: None,
             time_to_wait: None,
             song_info: None,

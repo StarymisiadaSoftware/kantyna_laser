@@ -77,7 +77,7 @@ async fn preview_queue() -> impl Responder {
     HttpResponse::Ok().json(MusicQueuePreview { queue: q })
 }
 
-#[actix_web::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() -> std::io::Result<()> {
     hook_runner_instance
         .lock()
@@ -88,7 +88,12 @@ async fn main() -> std::io::Result<()> {
 
     tokio::spawn(async {
         loop {
-            while let Some(song) = music_queue_instance.lock().await.pull_next() {
+            while let Some(song) = {
+                    let mut queue = music_queue_instance.lock().await;
+                    let r = queue.pull_next();
+                    drop(queue);
+                    r
+                } {
                 let hr = hook_runner_instance.lock().await;
                 hr.run_hooks(&song.url).await;
             }
