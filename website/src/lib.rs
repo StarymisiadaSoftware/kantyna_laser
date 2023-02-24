@@ -246,7 +246,7 @@ fn view(model: &Model) -> Node<Msg> {
             div![
                 C!["column"],
                 p![song.title.clone().unwrap_or_default()],
-                i![&song.url],
+                i![a![attrs!{At::Href => &song.url},&song.url]],
                 i![format!(
                     "Długość: {}",
                     pretty_print_seconds(song.duration.unwrap_or(0) as u32)
