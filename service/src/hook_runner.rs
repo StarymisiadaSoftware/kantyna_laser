@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use futures_util::stream::{self, StreamExt, TryStreamExt};
-use std::{path::PathBuf,process::{Stdio}};
-use tokio::{fs::read_dir, process::{Command}};
+use std::{path::PathBuf, process::Stdio};
+use tokio::{fs::read_dir, process::Command};
 
 #[derive(Default, Debug)]
 pub struct HookRunner {
