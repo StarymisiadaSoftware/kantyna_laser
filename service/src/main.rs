@@ -36,6 +36,13 @@ enum MyError {
     DeserializationError(#[from] serde_json::Error),
     #[error("Unable to perform I/O operation: {0}")]
     IoOperationError(#[from] std::io::Error),
+    #[error("Illegal URL: {0}")]
+    SanitizationError(String),
+    #[error("Forbidden: {0}")]
+    ValidationError(#[from] ValidationError),
+    #[error("Could not extract info about song: {0}")]
+    InfoExtractionError(#[from] YtDlpError)
+
 }
 
 impl ResponseError for MyError {
@@ -47,20 +54,20 @@ async fn enqueue(req_body: String) -> impl Responder {
     eprintln!("Received: {}", &req_body);
     let try_ = async {
         let enqueue_request: EnqueueRequest = from_str(&req_body)?;
-        let mut url = sanitize(enqueue_request.url)?;
+        let url = sanitize(enqueue_request.url)?;
         let mut new_song = Song::new(&url);
-        let _ = new_song.load_from_ytdlp().await;
-        let _ = new_song.validate();
-        music_queue_instance.lock().await.enqueue(new_song.clone());
-        Ok::<Song, MyError>(new_song)
+        new_song.load_from_ytdlp().await?;
+        new_song.validate()?;
+        let (ttw,pos) = music_queue_instance.lock().await.enqueue(new_song.clone());
+        Ok::<(u32,usize,Song), MyError>((ttw,pos,new_song))
     };
     match try_.await {
-        Ok(res) => {
+        Ok((ttw,pos,song)) => {
             let reply = EnqueueRequestReply {
                 error_message: None,
-                pos_in_queue: None,
-                time_to_wait: None,
-                song_info: Some(res),
+                pos_in_queue: Some(pos as u32),
+                time_to_wait: Some(ttw),
+                song_info: Some(song),
             };
             HttpResponse::Accepted().json(reply)
         }
