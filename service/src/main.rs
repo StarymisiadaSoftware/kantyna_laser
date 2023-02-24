@@ -89,11 +89,11 @@ async fn main() -> std::io::Result<()> {
     tokio::spawn(async {
         loop {
             while let Some(song) = {
-                    let mut queue = music_queue_instance.lock().await;
-                    let r = queue.pull_next();
-                    drop(queue);
-                    r
-                } {
+                let mut queue = music_queue_instance.lock().await;
+                let r = queue.pull_next();
+                drop(queue);
+                r
+            } {
                 let hr = hook_runner_instance.lock().await;
                 hr.run_hooks(&song.url).await;
             }

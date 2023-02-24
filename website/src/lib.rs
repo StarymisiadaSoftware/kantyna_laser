@@ -38,7 +38,7 @@ enum Msg {
     RefreshQueuePreview,
     ShowEnqueueProcessingScreen,
     DisplayNewQueuePreview(Box<MusicQueuePreview>),
-    DisplayEnqueueRequestReply(Box<EnqueueRequestReply>)
+    DisplayEnqueueRequestReply(Box<EnqueueRequestReply>),
 }
 
 type MsgSender = std::rc::Rc<dyn Fn(Option<Msg>)>;
@@ -48,7 +48,7 @@ fn update(msg: Msg, model: &mut Model, o: &mut impl Orders<Msg>) {
         Msg::Submit => {
             log!("Inside Submit handler.");
             let sender = o.skip().msg_sender();
-            run_submit(sender,model.youtube_url.clone());
+            run_submit(sender, model.youtube_url.clone());
         }
         Msg::InputValue(url) => {
             log!("Handling URL change: ", &url);
@@ -58,20 +58,20 @@ fn update(msg: Msg, model: &mut Model, o: &mut impl Orders<Msg>) {
         Msg::RefreshQueuePreview => {
             let sender = o.skip().msg_sender();
             run_refresh_queue(sender);
-            
         }
         Msg::DisplayNewQueuePreview(preview) => {
             model.music_queue_preview = Some(preview);
             // This happens by default
             // o.render();
-        },
+        }
         Msg::DisplayEnqueueRequestReply(reply) => {
             model.last_enqueue_request_reply = Some(reply);
             // This happens by default
             // o.render();
-        },
+        }
         Msg::ShowEnqueueProcessingScreen => {
-            model.last_enqueue_request_reply = Some(Box::from(EnqueueRequestReply::from_err_msg("Ładowanie...")));
+            model.last_enqueue_request_reply =
+                Some(Box::from(EnqueueRequestReply::from_err_msg("Ładowanie...")));
         }
     }
 }
@@ -114,18 +114,15 @@ fn pretty_print_seconds(seconds_total: u32) -> String {
     }
     ret.push_str(&format!("{} sekund ", seconds));
     ret
-
 }
 
 fn run_refresh_queue(msg_sender: MsgSender) {
-    let inner = move ||{
+    let inner = move || {
         let endpoint = format!("{}/preview_queue", get_endpoint_base()?);
         log!("[Refresh Queue] Final endpoint: ", &endpoint);
         spawn_local(async move {
             log!("[Refresh Queue] Sending GET request...");
-            let rq = Request::new(endpoint)
-                .method(Method::Get)
-                .fetch();
+            let rq = Request::new(endpoint).method(Method::Get).fetch();
             match rq.await {
                 Ok(res) => {
                     let text = res.text().await;
@@ -134,7 +131,7 @@ fn run_refresh_queue(msg_sender: MsgSender) {
                         Ok(Ok(reply)) => {
                             log!("[Refresh Queue] Reply has been deserialized successfully.");
                             msg_sender(Some(Msg::DisplayNewQueuePreview(Box::from(reply))));
-                        },
+                        }
                         Ok(Err(se)) => {
                             let e = format!("Failed to deserialize reply: {:?}", se);
                             log!("[Refresh Queue] ", e);
@@ -148,7 +145,7 @@ fn run_refresh_queue(msg_sender: MsgSender) {
                             msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(reply))));
                         }
                     }
-                },
+                }
                 Err(e) => {
                     let e = format!("Failed to send request: {:?}", e);
                     log!("[Refresh Queue] ", e);
@@ -162,7 +159,7 @@ fn run_refresh_queue(msg_sender: MsgSender) {
         anyhow::Ok(())
     };
     if let Err(e) = inner() {
-        log!("[Refresh Queue] ",e);
+        log!("[Refresh Queue] ", e);
     }
 }
 
@@ -185,23 +182,29 @@ fn run_submit(msg_sender: MsgSender, url: String) {
                             match text.map(|txt| from_str::<EnqueueRequestReply>(&txt)) {
                                 Ok(Ok(reply)) => {
                                     log!("[Submit] Reply has been deserialized successfully.");
-                                    msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(reply))));
+                                    msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(
+                                        reply,
+                                    ))));
                                     spawn_local(async move {
                                         TimeoutFuture::new(1_000).await;
                                         msg_sender(Some(Msg::RefreshQueuePreview));
                                     });
-                                },
+                                }
                                 Ok(Err(se)) => {
                                     let e = format!("Failed to deserialize reply: {:?}", se);
                                     log!("[Submit] ", e);
                                     let reply = EnqueueRequestReply::from_err_msg(&e);
-                                    msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(reply))));
+                                    msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(
+                                        reply,
+                                    ))));
                                 }
                                 Err(e) => {
                                     let e = format!("Failed to get a response: {:?}", e);
                                     log!("[Submit] ", e);
                                     let reply = EnqueueRequestReply::from_err_msg(&e);
-                                    msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(reply))));
+                                    msg_sender(Some(Msg::DisplayEnqueueRequestReply(Box::from(
+                                        reply,
+                                    ))));
                                 }
                             }
                         }
@@ -222,7 +225,7 @@ fn run_submit(msg_sender: MsgSender, url: String) {
         anyhow::Ok(())
     };
     if let Err(e) = inner() {
-        log!("[Submit] ",e);
+        log!("[Submit] ", e);
     }
 }
 
@@ -230,10 +233,12 @@ fn view(model: &Model) -> Node<Msg> {
     let show_song = |song: &Song| {
         div![
             C!["row"],
+            C!["curly_border"],
+            C!["in_border"],
             match &song.miniature_url {
                 Some(m) => {
                     img![attrs!(At::Src => m)].into_nodes()
-                },
+                }
                 None => {
                     i!["No image"].into_nodes()
                 }
@@ -242,7 +247,10 @@ fn view(model: &Model) -> Node<Msg> {
                 C!["column"],
                 p![song.title.clone().unwrap_or_default()],
                 i![&song.url],
-                i![format!("Długość: {}", pretty_print_seconds(song.duration.unwrap_or(0) as u32))]
+                i![format!(
+                    "Długość: {}",
+                    pretty_print_seconds(song.duration.unwrap_or(0) as u32)
+                )]
             ]
         ]
     };
@@ -250,7 +258,7 @@ fn view(model: &Model) -> Node<Msg> {
         match &model.music_queue_preview {
             Some(queue_preview) => {
                 let queue = &queue_preview.queue;
-                let mut total_queue_length : u32 = 0;
+                let mut total_queue_length: u32 = 0;
                 let mut queued_songs = Vec::new();
                 for i in &queue.queue {
                     queued_songs.push(show_song(i));
@@ -268,12 +276,19 @@ fn view(model: &Model) -> Node<Msg> {
                         }
                     ],
                     h3!["Następnie"],
-                    div![id!["queued_songs"], if queued_songs.is_empty() {
-                        i!["Nie ma dalej nic w kolejce"].into_nodes()
-                    } else {
-                        queued_songs.into_nodes()
-                    }],
-                    i![format!("Całkowita długość: {}",pretty_print_seconds(total_queue_length))]
+                    div![
+                        id!["queued_songs"],
+                        C!["spaced"],
+                        if queued_songs.is_empty() {
+                            i!["Nie ma dalej nic w kolejce"].into_nodes()
+                        } else {
+                            queued_songs.into_nodes()
+                        }
+                    ],
+                    i![format!(
+                        "Całkowita długość: {}",
+                        pretty_print_seconds(total_queue_length)
+                    )]
                 ]
             }
             None => {
@@ -286,21 +301,27 @@ fn view(model: &Model) -> Node<Msg> {
             Some(reply) => {
                 let ct = match reply.error_message.as_ref() {
                     Some(error_msg) => {
-                        b![error_msg]
+                        em![style! {St::Color => "red"}, error_msg]
                     }
                     None => {
                         div![
                             C!["column"],
-                            h3!["Twoja piosenka została dodana do kolejki."],
+                            h3![
+                                style! {St::Color => "green"},
+                                "Twoja piosenka została dodana do kolejki."
+                            ],
                             p![format!(
                                 "Pozycja w kolejce: {}",
                                 reply.pos_in_queue.unwrap_or(0)
                             )],
-                            p![format!("Szacowany czas oczekiwania: {}", reply.time_to_wait.unwrap_or(0))],
+                            p![format!(
+                                "Szacowany czas oczekiwania: {}",
+                                reply.time_to_wait.unwrap_or(0)
+                            )],
                             if let Some(s) = &reply.song_info.as_ref() {
                                 show_song(s)
                             } else {
-                                i!["No song info"]
+                                i!["Brak informacji o piosence"]
                             }
                         ]
                     }
