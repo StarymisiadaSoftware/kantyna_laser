@@ -8,7 +8,7 @@ pub fn anyhow_error_to_stdio_error(err: anyhow::Error) -> std::io::Error {
 }
 
 lazy_static! {
-    pub static ref youtube_regex: Regex = { Regex::new(YOUTUBE_URL_REGEX).unwrap() };
+    pub static ref youtube_regex: Regex = Regex::new(YOUTUBE_URL_REGEX).unwrap();
 }
 
 // Only allow youtube urls
