@@ -41,7 +41,7 @@ After that, the website is ready to be served (`website/` directory will be its'
 
 Inside the `website/` directory, run:
 
-`cargo make serve`
+`cargo make serve` (for development only)
 
 or using `microserver` directly:
 
@@ -49,6 +49,20 @@ or using `microserver` directly:
 
 You'll need to change the port to `80` for "production".
 
+`sudo microserver --port 80`
+
 ## Running backend service
 
 `cargo run -r -p service`
+
+Position queue can only advance when ALL hooks finish executing.
+
+### Hook dir
+
+The backend will attempt to load hooks from path specified by `KANTYNA_LASER_HOOK_DIR` environment variable.
+If the variable doesn't exist the backend will attempt to read `hooks/` directory (relative to current working directory).
+
+## Implementing hooks
+
+Just put anything runnable in your hooks directory.
+The backend sets `KANTYNA_LASER_URL` environment variable to the URL of the song to be played.
