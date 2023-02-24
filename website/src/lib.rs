@@ -241,6 +241,7 @@ fn view(model: &Model) -> Node<Msg> {
             C!["row"],
             C!["curly_border"],
             C!["in_border"],
+            C!["in_padding"],
             match &song.miniature_url {
                 Some(m) => {
                     img![
