@@ -5,14 +5,18 @@ A web app enabling everyone to enqueue their favorite music on your party!
 Host a local instance on your computer (the one which is plugged to audio equipment) in your home network
 and give the guests the IP address so that everyone can access the site and add a track to the music queue.
 
+**Currently the UI is available in Polish only**
+
 ## Requirements
+
+**Currently only tested on Linux**
 
 * Rust
 * `wasm-pack` (version `0.9.1` is the NEWEST known to work)
 * `microserver`
 * `yt-dlp`
-* Optional: `cargo-make` (for using cargo to run all commands)
-
+* Optional: `cargo-make` (for using cargo to run all commands (for development))
+* Optional: `mpv` and `python3` (for the bundled-in playback hook)
 
 ### Getting `wasm-pack`
 
