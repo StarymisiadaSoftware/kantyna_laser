@@ -419,6 +419,26 @@ fn view(model: &Model) -> Node<Msg> {
                 C!["spaced"],
                 queue_preview
             ]
+        ],
+        div![
+            id!["bottom_frame"],
+            C!["column"],
+            C!["spaced"],
+            C!["in_border"],
+            b![
+                C!["spaced"],  
+                "Kantyna Laser"
+            ],
+            p![
+                C!["spaced"], 
+                "Żeby dobrze grała muzyczka i każdy mógł coś puścić"
+            ],
+            i![
+                C!["spaced"],
+                "Written by Jakub Smulski, <hgonomeg@gmail.com>",
+                br![],
+                "Copyright © 2023 Starymisiada Software"
+            ]
         ]
     ]
 }
