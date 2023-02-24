@@ -24,10 +24,5 @@ common = { path = "../common" }
 seed = "0.9"
 anyhow = "1"
 
-[profile.release]
-lto = true
-opt-level = 'z'
-codegen-units = 1
-
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ['-Os']
