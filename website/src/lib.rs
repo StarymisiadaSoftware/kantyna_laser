@@ -432,6 +432,7 @@ fn view(model: &Model) -> Node<Msg> {
                 br![],
                 small![a![
                     attrs! {At::Href => "https://github.com/StarymisiadaSoftware/kantyna_laser"},
+                    style! {St::Color => "white"},
                     "Strona projektu"
                 ]]
             ],
