@@ -1,3 +1,4 @@
+#![allow(non_upper_case_globals)]
 use actix_cors::Cors;
 use actix_web::{dev::Service, get, post, App, HttpResponse, HttpServer, Responder, ResponseError};
 use anyhow::Result;

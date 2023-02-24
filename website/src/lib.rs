@@ -1,4 +1,3 @@
-use anyhow::Context;
 use common::{EnqueueRequest, EnqueueRequestReply, MusicQueuePreview, Song};
 use gloo_timers::future::TimeoutFuture;
 use js_sys::eval as js_eval;
