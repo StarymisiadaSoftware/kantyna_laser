@@ -240,6 +240,7 @@ fn view(model: &Model) -> Node<Msg> {
             C!["in_border"],
             C!["in_padding"],
             C!["nice_background"],
+            C!["song_info"],
             match &song.thumbnail_url {
                 Some(m) => {
                     img![
@@ -381,24 +382,21 @@ fn view(model: &Model) -> Node<Msg> {
                 // Contains the form
                 id!["input_frame"],
                 C!["in_border"],
+                C!["curly_border"],
                 C!["column"],
                 C!["spaced"],
                 C!["nice_background"],
                 h3![C!["spaced"], "Wklej jakiś link z YouTube."],
-                div![
-                    C!["row"],
+                input![
                     C!["spaced"],
-                    input![
-                        C!["spaced"],
-                        &model.youtube_url,
-                        input_ev(Ev::Input, |v: String| Msg::InputValue(v))
-                    ],
-                    button![
-                        C!["spaced"],
-                        "Zleć dodanie do kolejki",
-                        ev(Ev::Click, |_| Msg::Submit)
-                    ]
+                    &model.youtube_url,
+                    input_ev(Ev::Input, |v: String| Msg::InputValue(v))
                 ],
+                button![
+                    C!["spaced"],
+                    "Zleć dodanie do kolejki",
+                    ev(Ev::Click, |_| Msg::Submit)
+                ]
             ],
             message_box_content
         ],
@@ -411,6 +409,7 @@ fn view(model: &Model) -> Node<Msg> {
             button![
                 C!["spaced"],
                 C!["to_the_right_inside_flex"],
+                style! {St::FontSize => "1.4rem"},
                 "↻",
                 ev(Ev::Click, |_| Msg::RefreshQueuePreview)
             ],
