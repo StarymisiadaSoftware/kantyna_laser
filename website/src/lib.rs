@@ -411,7 +411,7 @@ fn view(model: &Model) -> Node<Msg> {
             button![
                 C!["spaced"],
                 C!["to_the_right_inside_flex"],
-                style! {St::FontSize => "1.4rem"},
+                style! {St::FontSize => "1.4rem", St::FontWeight => "bold"},
                 "↻",
                 ev(Ev::Click, |_| Msg::RefreshQueuePreview)
             ],
