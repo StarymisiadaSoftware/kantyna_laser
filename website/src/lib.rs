@@ -21,14 +21,20 @@ fn init(_: Url, o: &mut impl Orders<Msg>) -> Model {
     Model {
         youtube_url: "".to_owned(),
         music_queue_preview: None,
-        last_enqueue_request_reply: None,
+        message_box_content: MessageBoxContent::Nothing,
     }
+}
+
+enum MessageBoxContent {
+    Nothing,
+    EnqueueRequestReply(Box<EnqueueRequestReply>),
+    LoadingScreen,
 }
 
 struct Model {
     youtube_url: String,
     music_queue_preview: Option<Box<MusicQueuePreview>>,
-    last_enqueue_request_reply: Option<Box<EnqueueRequestReply>>,
+    message_box_content: MessageBoxContent,
 }
 
 #[derive(Debug, Clone)]
@@ -65,13 +71,12 @@ fn update(msg: Msg, model: &mut Model, o: &mut impl Orders<Msg>) {
             // o.render();
         }
         Msg::DisplayEnqueueRequestReply(reply) => {
-            model.last_enqueue_request_reply = Some(reply);
+            model.message_box_content = MessageBoxContent::EnqueueRequestReply(reply);
             // This happens by default
             // o.render();
         }
         Msg::ShowEnqueueProcessingScreen => {
-            model.last_enqueue_request_reply =
-                Some(Box::from(EnqueueRequestReply::from_err_msg("Ładowanie...")));
+            model.message_box_content = MessageBoxContent::LoadingScreen;
         }
     }
 }
@@ -186,7 +191,7 @@ fn run_submit(msg_sender: MsgSender, url: String) {
                                         reply,
                                     ))));
                                     spawn_local(async move {
-                                        TimeoutFuture::new(1_000).await;
+                                        TimeoutFuture::new(3_000).await;
                                         msg_sender(Some(Msg::RefreshQueuePreview));
                                     });
                                 }
@@ -237,7 +242,11 @@ fn view(model: &Model) -> Node<Msg> {
             C!["in_border"],
             match &song.miniature_url {
                 Some(m) => {
-                    img![attrs!(At::Src => m)].into_nodes()
+                    img![
+                        attrs!(At::Src => m),
+                        style!(St::MaxWidth => "100px", St::MaxHeight => "100px")
+                    ]
+                    .into_nodes()
                 }
                 None => {
                     i!["No image"].into_nodes()
@@ -246,7 +255,7 @@ fn view(model: &Model) -> Node<Msg> {
             div![
                 C!["column"],
                 p![song.title.clone().unwrap_or_default()],
-                i![a![attrs!{At::Href => &song.url},&song.url]],
+                i![a![attrs! {At::Href => &song.url}, &song.url]],
                 i![format!(
                     "Długość: {}",
                     pretty_print_seconds(song.duration.unwrap_or(0) as u32)
@@ -297,11 +306,14 @@ fn view(model: &Model) -> Node<Msg> {
         }
     };
     let message_box_content = {
-        match &model.last_enqueue_request_reply {
-            Some(reply) => {
+        match &model.message_box_content {
+            MessageBoxContent::EnqueueRequestReply(reply) => {
                 let ct = match reply.error_message.as_ref() {
                     Some(error_msg) => {
-                        em![style! {St::Color => "red"}, error_msg]
+                        h3![em![
+                            style! {St::Color => "red"},
+                            format!("Wystąpił błąd\n: {}", error_msg)
+                        ]]
                     }
                     None => {
                         div![
@@ -326,11 +338,13 @@ fn view(model: &Model) -> Node<Msg> {
                         ]
                     }
                 };
-                div![id!["message_box_content"], ct]
+                ct
             }
-            None => {
-                // Meant to be empty
-                p![]
+            MessageBoxContent::LoadingScreen => {
+                h3!["Ładowanie..."]
+            }
+            MessageBoxContent::Nothing => {
+                empty![]
             }
         }
     };

@@ -41,8 +41,7 @@ enum MyError {
     #[error("Forbidden: {0}")]
     ValidationError(#[from] ValidationError),
     #[error("Could not extract info about song: {0}")]
-    InfoExtractionError(#[from] YtDlpError)
-
+    InfoExtractionError(#[from] YtDlpError),
 }
 
 impl ResponseError for MyError {
@@ -58,11 +57,11 @@ async fn enqueue(req_body: String) -> impl Responder {
         let mut new_song = Song::new(&url);
         new_song.load_from_ytdlp().await?;
         new_song.validate()?;
-        let (ttw,pos) = music_queue_instance.lock().await.enqueue(new_song.clone());
-        Ok::<(u32,usize,Song), MyError>((ttw,pos,new_song))
+        let (ttw, pos) = music_queue_instance.lock().await.enqueue(new_song.clone());
+        Ok::<(u32, usize, Song), MyError>((ttw, pos, new_song))
     };
     match try_.await {
-        Ok((ttw,pos,song)) => {
+        Ok((ttw, pos, song)) => {
             let reply = EnqueueRequestReply {
                 error_message: None,
                 pos_in_queue: Some(pos as u32),
