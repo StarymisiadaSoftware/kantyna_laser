@@ -1,6 +1,9 @@
 # Kantyna laser
 
-TODO: Describe what I am
+A web app enabling everyone to enqueue their favorite music on your party!
+
+Host a local instance on your computer (the one which is plugged to audio equipment) in your home network
+and give the guests the IP address so that everyone can access the site and add a track to the music queue.
 
 ## Requirements
 
