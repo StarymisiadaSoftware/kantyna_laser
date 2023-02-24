@@ -14,7 +14,7 @@ pub fn sanitize(youtube_url: String) -> Result<String, MyError> {
     let rx = Regex::new(regexp).unwrap();
     if !rx.is_match(&sanitized) {
         Err(MyError::SanitizationError(
-            "URL doesn't match any know YouTube URL".to_string(),
+            "URL doesn't match any known YouTube URL".to_string(),
         ))
     } else {
         Ok(sanitized)
