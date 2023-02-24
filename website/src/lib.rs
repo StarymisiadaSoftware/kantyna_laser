@@ -425,13 +425,15 @@ fn view(model: &Model) -> Node<Msg> {
             C!["column"],
             C!["spaced"],
             C!["in_border"],
-            b![
-                C!["spaced"],  
-                "Kantyna Laser"
-            ],
+            b![C!["spaced"], "Kantyna Laser"],
             p![
-                C!["spaced"], 
-                "Żeby dobrze grała muzyczka i każdy mógł coś puścić"
+                C!["spaced"],
+                "Żeby dobrze grała muzyczka i każdy mógł coś puścić",
+                br![],
+                small![a![
+                    attrs! {At::Href => "https://github.com/StarymisiadaSoftware/kantyna_laser"},
+                    "Strona projektu"
+                ]]
             ],
             i![
                 C!["spaced"],
