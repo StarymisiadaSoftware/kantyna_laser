@@ -55,7 +55,7 @@ You'll need to change the port to `80` for "production".
 
 `cargo run -r -p service`
 
-Position queue can only advance when ALL hooks finish executing.
+Position in the queue can only advance when ALL hooks finish executing.
 
 ### Hook dir
 
