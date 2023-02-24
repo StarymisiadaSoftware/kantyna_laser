@@ -242,6 +242,7 @@ fn view(model: &Model) -> Node<Msg> {
             C!["curly_border"],
             C!["in_border"],
             C!["in_padding"],
+            C!["nice_background"],
             match &song.miniature_url {
                 Some(m) => {
                     img![
@@ -378,6 +379,7 @@ fn view(model: &Model) -> Node<Msg> {
                 C!["in_border"],
                 C!["column"],
                 C!["spaced"],
+                C!["nice_background"],
                 h3![C!["spaced"], "Wklej jakiś link z YouTube."],
                 div![
                     C!["row"],
