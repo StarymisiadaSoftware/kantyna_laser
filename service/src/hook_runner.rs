@@ -1,3 +1,4 @@
+use crate::consts::*;
 use anyhow::{Context, Result};
 use futures_util::stream::{self, StreamExt, TryStreamExt};
 use std::{path::PathBuf, process::Stdio};
@@ -14,7 +15,7 @@ impl HookRunner {
         eprintln!("Running hooks for song: '{}'.", url);
         let command_iter = self.hooks.iter().cloned().map(|x| {
             let mut command = Command::new(&x);
-            command.env("KANTYNA_LASER_URL", url);
+            command.env(HOOK_URL_ENVVAR, url);
             command.stdin(Stdio::null());
             //command.stdout(Stdio::null());
             (command, x)
@@ -55,7 +56,7 @@ impl HookRunner {
     /// Load hooks from the hook_dir
     pub async fn load(&mut self) -> Result<()> {
         self.hooks.clear();
-        let hook_dir = std::env::var("KANTYNA_LASER_HOOK_DIR").unwrap_or("./hooks".to_owned());
+        let hook_dir = std::env::var(HOOK_DIR_ENVVAR).unwrap_or("./hooks".to_owned());
         eprintln!("Loading hooks from '{}'", &hook_dir);
         let mut dir_iter = read_dir(&hook_dir).await?;
         while let Ok(Some(entry)) = dir_iter.next_entry().await {

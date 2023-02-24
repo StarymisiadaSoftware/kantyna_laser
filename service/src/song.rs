@@ -1,3 +1,4 @@
+use crate::consts::*;
 use async_trait::async_trait;
 pub use common::Song;
 use serde::Deserialize;
@@ -36,7 +37,7 @@ pub trait SongExt {
 #[async_trait]
 impl SongExt for Song {
     async fn load_from_ytdlp(&mut self) -> Result<(), YtDlpError> {
-        let mut yt_dlp = Command::new("yt-dlp");
+        let mut yt_dlp = Command::new(YTDLP_COMMAND);
         yt_dlp.arg("--dump-json");
         yt_dlp.arg(&self.url);
         let output = yt_dlp.output().await?;
@@ -52,8 +53,7 @@ impl SongExt for Song {
         Ok(())
     }
     fn validate(&self) -> Result<(), ValidationError> {
-        // 20 minutes length limit
-        if self.duration.unwrap_or(0) > 1200 {
+        if self.duration.unwrap_or(0) > LENGTH_LIMIT_SECONDS {
             return Err(ValidationError::SongTooLong);
         }
         Ok(())

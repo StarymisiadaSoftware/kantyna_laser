@@ -1,4 +1,4 @@
-use common::{EnqueueRequest, EnqueueRequestReply, MusicQueuePreview, Song};
+use common::{EnqueueRequest, EnqueueRequestReply, MusicQueuePreview, Song, BACKEND_PORT};
 use gloo_timers::future::TimeoutFuture;
 use js_sys::eval as js_eval;
 use seed::{prelude::*, *};
@@ -12,7 +12,7 @@ fn init(_: Url, o: &mut impl Orders<Msg>) -> Model {
     spawn_local(async move {
         log!("[Auto Queue Refresh Loop] Started automatic queue refresh loop.");
         loop {
-            TimeoutFuture::new(15_000).await;
+            TimeoutFuture::new(60_000).await;
             log!("[Auto Queue Refresh Loop] Issuing automatic queue refresh.");
             msg_sender(Some(Msg::RefreshQueuePreview));
         }
@@ -91,9 +91,7 @@ fn get_endpoint_base() -> anyhow::Result<String> {
     };
     log!("Got endpoint from JS: ", &endpoint);
     let endpoint = endpoint.replace("?", "");
-    //let mut endpoint = endpoint.replace("8080", "8090");
-    //endpoint.push_str(":8090/enqueue");
-    let endpoint = format!("http://{}:8090", endpoint);
+    let endpoint = format!("http://{}:{}", endpoint, BACKEND_PORT);
     Ok(endpoint)
 }
 
@@ -190,7 +188,7 @@ fn run_submit(msg_sender: MsgSender, url: String) {
                                         reply,
                                     ))));
                                     spawn_local(async move {
-                                        TimeoutFuture::new(3_000).await;
+                                        TimeoutFuture::new(1_500).await;
                                         msg_sender(Some(Msg::RefreshQueuePreview));
                                     });
                                 }
@@ -361,7 +359,7 @@ fn view(model: &Model) -> Node<Msg> {
                 ct
             }
             MessageBoxContent::LoadingScreen => {
-                h3!["Ładowanie..."]
+                h3![style!(St::Color => "pink"), "Ładowanie..."]
             }
             MessageBoxContent::Nothing => {
                 empty![]

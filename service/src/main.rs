@@ -1,7 +1,7 @@
 #![allow(non_upper_case_globals)]
 use actix_cors::Cors;
-use actix_web::{dev::Service, get, post, App, HttpResponse, HttpServer, Responder, ResponseError};
-use common::{EnqueueRequest, EnqueueRequestReply, MusicQueuePreview};
+use actix_web::{dev::Service, get, post, App, HttpResponse, HttpServer, Responder};
+use common::{EnqueueRequest, EnqueueRequestReply, MusicQueuePreview, BACKEND_PORT};
 use lazy_static::lazy_static;
 use serde_json::from_str;
 use std::sync::Arc;
@@ -15,6 +15,8 @@ pub mod song;
 use song::*;
 pub mod hook_runner;
 use hook_runner::*;
+
+pub mod consts;
 
 pub mod music_queue;
 use music_queue::*;
@@ -38,9 +40,9 @@ pub enum MyError {
     InfoExtractionError(#[from] YtDlpError),
 }
 
-impl ResponseError for MyError {
-    //nothing needed
-}
+// impl ResponseError for MyError {
+//     //nothing needed
+// }
 
 #[post("/enqueue")]
 async fn enqueue(req_body: String) -> impl Responder {
@@ -100,7 +102,7 @@ async fn main() -> std::io::Result<()> {
 
             // todo: make it smarter
             // Use a condvar or something
-            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
         }
     });
 
@@ -123,7 +125,7 @@ async fn main() -> std::io::Result<()> {
                 }
             })
     })
-    .bind(("0.0.0.0", 8090))?
+    .bind(("0.0.0.0", BACKEND_PORT))?
     .run()
     .await
 }
