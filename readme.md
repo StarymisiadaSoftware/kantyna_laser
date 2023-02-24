@@ -78,10 +78,10 @@ You can read that value and do anything you want with it.
 
 Reference for the backend's API
 
-### *GET* `/preview_queue`
+### **GET** `/preview_queue`
 
 Todo: Document it
 
-### *POST* `/enqueue`
+### **POST** `/enqueue`
 
 Todo: Document it
