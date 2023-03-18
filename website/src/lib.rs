@@ -442,7 +442,16 @@ fn view(model: &Model) -> Node<Msg> {
                 C!["spaced"],
                 "Written by Jakub Smulski, <hgonomeg@gmail.com>",
                 br![],
-                "Copyright © 2023 Starymisiada Software"
+            ],
+            img![
+                attrs! {At::Src => "logo.png"},
+                style! {St::MaxWidth => "144px"},
+                C!["spaced"],
+            ],
+            i![
+                C!["spaced"],
+                "Copyright © 2023 Starymisiada Software",
+                br![],
             ]
         ]
     ]
